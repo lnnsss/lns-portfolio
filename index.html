@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>lns portfolio</title>
+
+    <!--main-->
+    <meta name="title" content="lns portfolio">
+    <meta name="description" content="Сайт-портфолио графического дизайнера и веб-разработчика">
+    <!--favicon-->
+    <link rel="icon" href="./public/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="./public/favicon-32.png" sizes="32x32">
+    <link rel="apple-touch-icon" href="./public/apple-touch-icon.png">
+    <!--og-->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="lns portfolio">
+    <meta property="og:description" content="Сайт-портфолио графического дизайнера и веб-разработчика">
+    <meta property="og:url" content="https://lnnsss.github.io/lns-portfolio/">
+    <meta property="og:image" content="https://lnnsss.github.io/lns-portfolio/public/preview.jpg">
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #bg {
+            position: fixed;
+            inset: 0;
+            /*background-image: url("./public/bg.jpg");*/
+            /*background-size: cover;*/
+            /*background-position: center center;*/
+            /*background-repeat: no-repeat;*/
+            background-color: black;
+            filter: brightness(0.72);
+            z-index: 0;
+        }
+        /*@media (max-width: 1024px) {*/
+        /*    #bg {*/
+        /*        background-image: url('./public/bg-mobile.jpg');*/
+        /*    }*/
+        /*}*/
+
+        #stage {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #text {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            font-size: clamp(1.4rem, 4.5vw, 3.6rem);
+            font-weight: 400;
+            letter-spacing: 0.03em;
+            color: #fff;
+            /*text-shadow:*/
+            /*        0 2px 8px rgba(0,0,0,0.55),*/
+            /*        0 0 40px rgba(0,0,0,0.35);*/
+            /*white-space: nowrap;*/
+            min-width: 1ch;
+        }
+
+        #cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1.05em;
+            background: #fff;
+            margin-left: 3px;
+            vertical-align: middle;
+            animation: blink 1.1s step-start infinite;
+            box-shadow: 0 0 6px rgba(255,255,255,0.6);
+            opacity: 1;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="bg"></div>
+
+<div id="stage">
+    <p id="text"><span id="typed"></span><span id="cursor"></span></p>
+</div>
+
+<script>
+    const BG_IMAGE_URL = './public/bg.jpg';
+    const MUSIC_URL    = './public/NIGHTCLUB.mp3';
+
+    document.getElementById('bg').style.setProperty('--bg-url', `url("${BG_IMAGE_URL}")`);
+
+    const audio = new Audio(MUSIC_URL);
+    audio.loop   = true;
+    audio.volume = 0.55;
+
+    function tryPlay() {
+        audio.play().catch(() => {
+            const unlock = () => {
+                audio.play().catch(() => {});
+                window.removeEventListener('click',     unlock);
+                window.removeEventListener('keydown',   unlock);
+                window.removeEventListener('touchstart',unlock);
+            };
+            window.addEventListener('click',      unlock, { once: true });
+            window.addEventListener('keydown',    unlock, { once: true });
+            window.addEventListener('touchstart', unlock, { once: true });
+        });
+    }
+
+    tryPlay();
+
+    const MESSAGE = 'lns, what are you doing??';
+    const typedEl = document.getElementById('typed');
+
+    const PAUSE_AFTER_TYPE   = 2200;
+    const PAUSE_AFTER_ERASE  = 900;
+
+    function typeDelay(nextChar) {
+        const base   = 95;
+        const jitter = Math.random() * 60 - 30;
+        const punct  = /[,?.!]/.test(nextChar) ? 190 : 0;
+        return Math.max(30, base + jitter + punct);
+    }
+    function eraseDelay() {
+        const base   = 65;
+        const jitter = Math.random() * 40 - 20;
+        const hesit  = Math.random() < 0.08 ? 200 : 0;
+        return Math.max(20, base + jitter + hesit);
+    }
+
+    function typePhase() {
+        let i = 0;
+        function step() {
+            typedEl.textContent = MESSAGE.slice(0, i + 1);
+            i++;
+            if (i < MESSAGE.length) {
+                setTimeout(step, typeDelay(MESSAGE[i]));
+            } else {
+                setTimeout(erasePhase, PAUSE_AFTER_TYPE);
+            }
+        }
+        step();
+    }
+
+    function erasePhase() {
+        let len = MESSAGE.length;
+        function step() {
+            len--;
+            typedEl.textContent = MESSAGE.slice(0, len);
+            if (len > 0) {
+                setTimeout(step, eraseDelay());
+            } else {
+                setTimeout(typePhase, PAUSE_AFTER_ERASE);
+            }
+        }
+        step();
+    }
+
+    setTimeout(typePhase, 820);
+</script>
+</body>
+</html>
