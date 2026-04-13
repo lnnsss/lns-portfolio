@@ -1,174 +1,243 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>lns portfolio</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portfolio Loading</title>
 
-    <!--main-->
-    <meta name="title" content="lns portfolio">
-    <meta name="description" content="Сайт-портфолио графического дизайнера и веб-разработчика">
-    <!--favicon-->
-    <link rel="icon" href="./public/favicon.svg" type="image/svg+xml">
-    <link rel="icon" href="./public/favicon-32.png" sizes="32x32">
-    <link rel="apple-touch-icon" href="./public/apple-touch-icon.png">
-    <!--og-->
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="lns portfolio">
-    <meta property="og:description" content="Сайт-портфолио графического дизайнера и веб-разработчика">
-    <meta property="og:url" content="https://lnnsss.github.io/lns-portfolio/">
-    <meta property="og:image" content="https://lnnsss.github.io/lns-portfolio/public/preview.jpg">
+  <style>
+    :root {
+      --frame: 30px;
+      --radius: 30px;
+    }
 
-    <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-        html, body {
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
-            background: #000;
-        }
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      font-family: Arial, Helvetica, sans-serif;
+    }
 
-        #bg {
-            position: fixed;
-            inset: 0;
-            /*background-image: url("./public/bg.jpg");*/
-            /*background-size: cover;*/
-            /*background-position: center center;*/
-            /*background-repeat: no-repeat;*/
-            background-color: black;
-            filter: brightness(0.72);
-            z-index: 0;
-        }
-        /*@media (max-width: 1024px) {*/
-        /*    #bg {*/
-        /*        background-image: url('./public/bg-mobile.jpg');*/
-        /*    }*/
-        /*}*/
+    .screen {
+      position: fixed;
+      inset: var(--frame);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      isolation: isolate;
+    }
 
-        #stage {
-            position: relative;
-            z-index: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100vw;
-            height: 100vh;
-        }
+    .screen::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 25%, rgba(145, 185, 255, 0.09), transparent 40%),
+        radial-gradient(circle at 82% 70%, rgba(165, 205, 255, 0.07), transparent 44%);
+      z-index: 0;
+      pointer-events: none;
+    }
 
-        #text {
-            font-family: 'Georgia', 'Times New Roman', serif;
-            font-size: clamp(1.4rem, 4.5vw, 3.6rem);
-            font-weight: 400;
-            letter-spacing: 0.03em;
-            color: #fff;
-            /*text-shadow:*/
-            /*        0 2px 8px rgba(0,0,0,0.55),*/
-            /*        0 0 40px rgba(0,0,0,0.35);*/
-            /*white-space: nowrap;*/
-            min-width: 1ch;
-        }
+    .title {
+      position: relative;
+      display: inline-flex;
+      align-items: baseline;
+      justify-content: center;
+      transform: translateX(0.32em);
+      color: #000;
+      font-weight: 900;
+      font-size: clamp(26px, 4.3vw, 62px);
+      letter-spacing: 0.01em;
+      line-height: 1;
+      text-align: center;
+      z-index: 1;
+      text-transform: none;
+      white-space: nowrap;
+    }
 
-        #cursor {
-            display: inline-block;
-            width: 2px;
-            height: 1.05em;
-            background: #fff;
-            margin-left: 3px;
-            vertical-align: middle;
-            animation: blink 1.1s step-start infinite;
-            box-shadow: 0 0 6px rgba(255,255,255,0.6);
-            opacity: 1;
-        }
+    .title-part {
+      position: relative;
+      display: inline-block;
+      filter: blur(0.18px);
+      text-shadow:
+        0 0 1px rgba(0, 0, 0, 0.92),
+        0.8px 0.8px 0 rgba(0, 0, 0, 0.85),
+        -0.6px 0.5px 0 rgba(0, 0, 0, 0.72);
+      animation: textBuzz 0.13s steps(2) infinite;
+    }
 
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50%       { opacity: 0; }
-        }
-    </style>
+    .title-dots {
+      width: 3ch;
+      margin-left: 0.04em;
+      text-align: left;
+      white-space: pre;
+    }
+
+    .title-part::before,
+    .title-part::after {
+      content: attr(data-text);
+      position: absolute;
+      inset: 0;
+      color: #000;
+      pointer-events: none;
+    }
+
+    .title-part::before {
+      opacity: 0.35;
+      filter: blur(1px);
+      transform: translate(1px, 1px);
+    }
+
+    .title-part::after {
+      opacity: 0.5;
+      filter: blur(0.55px);
+      transform: translate(-0.5px, 0.4px);
+    }
+
+    .noise,
+    .scanlines {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .noise {
+      opacity: 0.34;
+      background-image:
+        radial-gradient(rgba(0, 0, 0, 0.24) 0.55px, transparent 0.68px),
+        radial-gradient(rgba(0, 0, 0, 0.14) 0.35px, transparent 0.55px);
+      background-size: 3px 3px, 5px 5px;
+      background-position: 0 0, 1px 1px;
+      mix-blend-mode: multiply;
+      animation: noiseShift 0.2s steps(5) infinite, flicker 0.12s infinite;
+    }
+
+    .scanlines {
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(19, 33, 58, 0.12) 0px,
+        rgba(19, 33, 58, 0.12) 1px,
+        rgba(255, 255, 255, 0) 2px,
+        rgba(255, 255, 255, 0) 4px
+      );
+      opacity: 0.19;
+      animation: flicker 0.18s infinite;
+    }
+
+    @keyframes noiseShift {
+      0% {
+        transform: translate(0, 0);
+      }
+      25% {
+        transform: translate(-1.5%, 0.8%);
+      }
+      50% {
+        transform: translate(1.2%, -0.9%);
+      }
+      75% {
+        transform: translate(-0.8%, 1.1%);
+      }
+      100% {
+        transform: translate(0.6%, -1.2%);
+      }
+    }
+
+    @keyframes flicker {
+      0% {
+        opacity: 0.24;
+      }
+      20% {
+        opacity: 0.34;
+      }
+      40% {
+        opacity: 0.21;
+      }
+      60% {
+        opacity: 0.3;
+      }
+      80% {
+        opacity: 0.22;
+      }
+      100% {
+        opacity: 0.28;
+      }
+    }
+
+    @keyframes textBuzz {
+      0% {
+        transform: translate(0, 0);
+      }
+      25% {
+        transform: translate(0.2px, -0.1px);
+      }
+      50% {
+        transform: translate(-0.25px, 0.15px);
+      }
+      75% {
+        transform: translate(0.15px, 0.2px);
+      }
+      100% {
+        transform: translate(0, 0);
+      }
+    }
+
+    @media (max-width: 768px) {
+      :root {
+        --frame: 15px;
+        --radius: 22px;
+      }
+
+      .title {
+        font-size: clamp(21px, 7.3vw, 36px);
+      }
+    }
+
+  </style>
 </head>
 <body>
+  <main class="screen">
+    <h1 class="title" id="loadingTitle">
+      <span class="title-part" id="loadingBase" data-text="portfolio loading">portfolio loading</span>
+      <span class="title-part title-dots" id="loadingDots" data-text=""></span>
+    </h1>
+    <div class="noise"></div>
+    <div class="scanlines"></div>
+  </main>
 
-<div id="bg"></div>
+  <script>
+    const dotsEl = document.getElementById("loadingDots");
+    const dots = ["", ".", "..", "..."];
+    const timing = [320, 360, 430, 720];
+    let step = 0;
 
-<div id="stage">
-    <p id="text"><span id="typed"></span><span id="cursor"></span></p>
-</div>
-
-<script>
-    const BG_IMAGE_URL = './public/bg.jpg';
-    const MUSIC_URL    = './public/NIGHTCLUB.mp3';
-
-    document.getElementById('bg').style.setProperty('--bg-url', `url("${BG_IMAGE_URL}")`);
-
-    const audio = new Audio(MUSIC_URL);
-    audio.loop   = true;
-    audio.volume = 0.55;
-
-    function tryPlay() {
-        audio.play().catch(() => {
-            const unlock = () => {
-                audio.play().catch(() => {});
-                window.removeEventListener('click',     unlock);
-                window.removeEventListener('keydown',   unlock);
-                window.removeEventListener('touchstart',unlock);
-            };
-            window.addEventListener('click',      unlock, { once: true });
-            window.addEventListener('keydown',    unlock, { once: true });
-            window.addEventListener('touchstart', unlock, { once: true });
-        });
+    function render() {
+      const value = dots[step];
+      dotsEl.textContent = value;
+      dotsEl.setAttribute("data-text", value);
     }
 
-    tryPlay();
+    function animateDots() {
+      step = (step + 1) % dots.length;
+      render();
 
-    const MESSAGE = 'lns, what are you doing??';
-    const typedEl = document.getElementById('typed');
-
-    const PAUSE_AFTER_TYPE   = 2200;
-    const PAUSE_AFTER_ERASE  = 900;
-
-    function typeDelay(nextChar) {
-        const base   = 95;
-        const jitter = Math.random() * 60 - 30;
-        const punct  = /[,?.!]/.test(nextChar) ? 190 : 0;
-        return Math.max(30, base + jitter + punct);
-    }
-    function eraseDelay() {
-        const base   = 65;
-        const jitter = Math.random() * 40 - 20;
-        const hesit  = Math.random() < 0.08 ? 200 : 0;
-        return Math.max(20, base + jitter + hesit);
+      const jitter = Math.floor(Math.random() * 90) - 45;
+      const delay = Math.max(220, timing[step] + jitter);
+      setTimeout(animateDots, delay);
     }
 
-    function typePhase() {
-        let i = 0;
-        function step() {
-            typedEl.textContent = MESSAGE.slice(0, i + 1);
-            i++;
-            if (i < MESSAGE.length) {
-                setTimeout(step, typeDelay(MESSAGE[i]));
-            } else {
-                setTimeout(erasePhase, PAUSE_AFTER_TYPE);
-            }
-        }
-        step();
-    }
-
-    function erasePhase() {
-        let len = MESSAGE.length;
-        function step() {
-            len--;
-            typedEl.textContent = MESSAGE.slice(0, len);
-            if (len > 0) {
-                setTimeout(step, eraseDelay());
-            } else {
-                setTimeout(typePhase, PAUSE_AFTER_ERASE);
-            }
-        }
-        step();
-    }
-
-    setTimeout(typePhase, 820);
-</script>
+    render();
+    setTimeout(animateDots, 360);
+  </script>
 </body>
 </html>
