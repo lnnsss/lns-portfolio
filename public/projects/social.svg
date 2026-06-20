@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 820" role="img" aria-labelledby="title desc">
+  <title id="title">Визуальная система для соцсетей</title>
+  <desc id="desc">Сетка шаблонов для соцсетей с крупной типографикой и сдержанным цветом.</desc>
+  <rect width="1200" height="820" fill="#f2ede4"/>
+  <rect x="92" y="72" width="310" height="620" fill="#111"/>
+  <rect x="446" y="72" width="310" height="620" fill="#f9f5ed" stroke="#111" stroke-width="2"/>
+  <rect x="800" y="72" width="310" height="620" fill="#d4512a"/>
+  <text x="130" y="210" fill="#f9f5ed" font-family="Arial, Helvetica, sans-serif" font-size="72" font-weight="800" letter-spacing="-5">GRID</text>
+  <text x="130" y="286" fill="#f9f5ed" font-family="Arial, Helvetica, sans-serif" font-size="72" font-weight="800" letter-spacing="-5">SYSTEM</text>
+  <circle cx="601" cy="282" r="92" fill="#d9d2c6"/>
+  <line x1="496" y1="484" x2="706" y2="484" stroke="#111" stroke-width="2"/>
+  <text x="496" y="542" fill="#111" font-family="Arial, Helvetica, sans-serif" font-size="31" font-weight="700">POST KIT</text>
+  <text x="848" y="250" fill="#111" font-family="Arial, Helvetica, sans-serif" font-size="90" font-weight="800" letter-spacing="-7">01</text>
+  <text x="848" y="578" fill="#111" font-family="Arial, Helvetica, sans-serif" font-size="30">Campaign templates</text>
+  <text x="92" y="748" fill="#111" font-family="Arial, Helvetica, sans-serif" font-size="40" font-weight="800" letter-spacing="-2">Social visuals. Fast system.</text>
+</svg>

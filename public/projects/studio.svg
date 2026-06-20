@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 820" role="img" aria-labelledby="title desc">
+  <title id="title">Портфолио для креативной студии</title>
+  <desc id="desc">Минималистичный сайт-портфолио с крупной типографикой и визуальными блоками проектов.</desc>
+  <rect width="1200" height="820" fill="#f6f1e8"/>
+  <rect x="74" y="74" width="1052" height="672" fill="#fffdf8" stroke="#0b0b0b" stroke-width="2"/>
+  <line x1="74" y1="154" x2="1126" y2="154" stroke="#0b0b0b" stroke-width="2"/>
+  <text x="116" y="126" fill="#0b0b0b" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="800" letter-spacing="-2">STUDIO</text>
+  <text x="782" y="126" fill="#0b0b0b" font-family="Arial, Helvetica, sans-serif" font-size="18">WORK ABOUT CONTACT</text>
+  <text x="112" y="318" fill="#0b0b0b" font-family="Arial, Helvetica, sans-serif" font-size="124" font-weight="800" letter-spacing="-9">DIGITAL</text>
+  <text x="112" y="426" fill="#0b0b0b" font-family="Arial, Helvetica, sans-serif" font-size="124" font-weight="800" letter-spacing="-9">PRESENCE</text>
+  <rect x="126" y="520" width="260" height="132" fill="#d4512a"/>
+  <rect x="422" y="520" width="260" height="132" fill="#1d1d1d"/>
+  <rect x="718" y="226" width="330" height="426" fill="#ded7cb"/>
+  <circle cx="883" cy="438" r="118" fill="#f7f1e6" stroke="#0b0b0b" stroke-width="2"/>
+</svg>

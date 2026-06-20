@@ -1,0 +1,68 @@
+.socials {
+  min-height: 70svh;
+  display: grid;
+  gap: clamp(26px, 4vw, 44px);
+  padding: clamp(70px, 10vw, 126px) var(--gutter);
+  border-top: 1px solid var(--line);
+}
+
+.socials div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+}
+
+.socials a {
+  position: relative;
+  display: inline-block;
+  font-family: var(--font-jumbo);
+  font-size: clamp(36px, 8vw, 112px);
+  font-weight: 800;
+  letter-spacing: -0.075em;
+  line-height: 0.92;
+  transition: opacity 220ms var(--ease), transform 320ms var(--ease);
+}
+
+.socials a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -3px;
+  height: 0.06em;
+  background: var(--hover);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 320ms var(--ease);
+}
+
+.socials a:hover {
+  color: var(--hover);
+  opacity: 1;
+  transform: translateY(-6px);
+}
+
+.socials a:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+@media (max-width: 620px) {
+  .socials {
+    min-height: auto;
+    padding: 72px var(--gutter);
+  }
+
+  .socials div {
+    display: grid;
+    gap: 8px;
+  }
+
+  .socials a {
+    width: max-content;
+    max-width: 100%;
+    font-size: clamp(42px, 15vw, 72px);
+    line-height: 0.9;
+    overflow-wrap: anywhere;
+  }
+}

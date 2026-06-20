@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 820" role="img" aria-labelledby="title desc">
+  <title id="title">Айдентика Aurora</title>
+  <desc id="desc">Редакционная айдентика с теплой бумагой, крупным знаком, этикетками и формами упаковки.</desc>
+  <rect width="1200" height="820" fill="#e9e2d5"/>
+  <rect x="64" y="64" width="1072" height="692" fill="#f8f3e9" stroke="#161616" stroke-width="2"/>
+  <circle cx="965" cy="200" r="94" fill="#d4512a"/>
+  <rect x="122" y="132" width="360" height="478" fill="#191919"/>
+  <text x="160" y="250" fill="#f8f3e9" font-family="Arial, Helvetica, sans-serif" font-size="86" font-weight="800" letter-spacing="-6">AURORA</text>
+  <text x="160" y="324" fill="#f8f3e9" font-family="Arial, Helvetica, sans-serif" font-size="24" letter-spacing="5">WELLNESS IDENTITY</text>
+  <rect x="568" y="162" width="272" height="360" fill="#fffaf1" stroke="#191919" stroke-width="2"/>
+  <text x="610" y="260" fill="#191919" font-family="Arial, Helvetica, sans-serif" font-size="66" font-weight="800" letter-spacing="-4">A.</text>
+  <line x1="610" y1="330" x2="796" y2="330" stroke="#191919" stroke-width="2"/>
+  <text x="610" y="390" fill="#6d685f" font-family="Arial, Helvetica, sans-serif" font-size="21">Soft ritual kit</text>
+  <text x="610" y="424" fill="#6d685f" font-family="Arial, Helvetica, sans-serif" font-size="21">Visual system 2026</text>
+  <rect x="744" y="458" width="240" height="128" fill="#d8cfc0"/>
+  <text x="126" y="700" fill="#191919" font-family="Arial, Helvetica, sans-serif" font-size="40" font-weight="700" letter-spacing="-2">Quiet identity. Strong memory.</text>
+</svg>

@@ -1,0 +1,17 @@
+.preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  background: #050505;
+}
+
+.logo {
+  width: clamp(96px, 14vw, 192px);
+}
+
+.logo img {
+  width: 100%;
+  height: auto;
+}

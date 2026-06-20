@@ -1,0 +1,65 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# Next.js / React
+.next/
+out/
+build/
+dist/
+next-env.d.ts
+
+# Production / coverage
+coverage/
+.nyc_output/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+!.env.local.example
+
+# Supabase
+supabase/.branches/
+supabase/.temp/
+supabase/.env
+supabase/.env.*
+supabase/.cache/
+supabase/.logs/
+supabase/functions/**/.env
+supabase/functions/**/.env.*
+supabase/seed.local.sql
+supabase/seed.*.local.sql
+
+# Local databases / backend runtime files
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.log
+logs/
+tmp/
+temp/
+
+# Package manager logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# System / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.example.json
+
+# Vercel / deployment metadata
+.vercel/
+
+# Test tooling
+playwright-report/
+test-results/

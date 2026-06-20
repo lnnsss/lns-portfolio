@@ -1,0 +1,103 @@
+.services {
+  position: relative;
+  padding: clamp(84px, 11vw, 150px) var(--gutter);
+  border-top: 1px solid var(--line);
+}
+
+.services::before {
+  content: "";
+  position: absolute;
+  inset: 12% auto auto 58%;
+  width: 32vw;
+  aspect-ratio: 1;
+  border: 1px solid rgba(212, 81, 42, 0.25);
+  border-radius: 50%;
+  transform: translateY(-12%);
+  pointer-events: none;
+}
+
+.head {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.28fr) minmax(280px, 0.72fr);
+  gap: 28px;
+  margin-bottom: clamp(28px, 5vw, 64px);
+}
+
+.head p {
+  margin: 0;
+  color: var(--graphite);
+  font-size: clamp(22px, 3.5vw, 48px);
+  font-weight: 700;
+  letter-spacing: -0.052em;
+  line-height: 1;
+}
+
+.list {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+}
+
+.service {
+  overflow: hidden;
+}
+
+.service span {
+  display: block;
+  padding: 4px 0;
+  color: white;
+  font-size: clamp(42px, 8.7vw, 132px);
+  font-weight: 800;
+  letter-spacing: -0.078em;
+  line-height: 0.86;
+  transition: color 260ms var(--ease), transform 360ms var(--ease);
+}
+
+.service span::after {
+  content: "/";
+  margin-inline: 18px 0;
+  color: var(--line-strong);
+}
+
+.service:hover span {
+  color: var(--accent);
+  transform: translateY(-8px);
+}
+
+@media (max-width: 760px) {
+  .services {
+    padding: 72px var(--gutter);
+  }
+
+  .head {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .head p {
+    max-width: 12ch;
+    font-size: clamp(32px, 10vw, 52px);
+  }
+
+  .services::before {
+    width: 70vw;
+    inset: 20% auto auto 34%;
+  }
+
+  .list {
+    display: grid;
+    gap: 8px;
+  }
+
+  .service span {
+    font-size: clamp(42px, 14vw, 72px);
+    line-height: 0.88;
+  }
+
+  .service span::after {
+    content: "";
+    margin: 0;
+  }
+}
