@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
+import { useCallback, useMemo, useState, useTransition } from "react";
 import {
   closestCenter,
   DndContext,
@@ -19,6 +19,7 @@ import {
   rectSortingStrategy
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { AdminToastProvider, useAdminToast } from "./AdminToast";
 import styles from "./admin.module.css";
 
 function SortButton({ attributes, listeners }) {
@@ -74,6 +75,24 @@ function useAdminSensors() {
   );
 }
 
+function useToastAction() {
+  const showToast = useAdminToast();
+
+  return useCallback(
+    async (action, formData, successMessage) => {
+      try {
+        await action(formData);
+        showToast(successMessage);
+        return true;
+      } catch (error) {
+        showToast(error?.message || "Не удалось сохранить изменения", "error");
+        return false;
+      }
+    },
+    [showToast]
+  );
+}
+
 function PreviewImage({ src, alt, className }) {
   if (!src) return <div className={`${styles.previewFallback} ${className || ""}`}>Нет фото</div>;
   return <img className={className} src={src} alt={alt || ""} loading="lazy" />;
@@ -81,6 +100,7 @@ function PreviewImage({ src, alt, className }) {
 
 export default function AdminDashboard({
   content,
+  initialToast,
   saveAboutSlide,
   deleteAboutSlide,
   reorderAboutSlides,
@@ -92,36 +112,39 @@ export default function AdminDashboard({
   deleteSocialLink
 }) {
   return (
-    <div className={styles.workspace}>
-      <nav className={styles.navRail} aria-label="Разделы админки">
-        <a href="#about">Фото</a>
-        <a href="#projects">Кейсы</a>
-        <a href="#archive">Архив</a>
-        <a href="#social">Соцсети</a>
-      </nav>
-      <div className={styles.sections}>
-        <AboutSection
-          slides={content.slides}
-          saveAboutSlide={saveAboutSlide}
-          deleteAboutSlide={deleteAboutSlide}
-          reorderAboutSlides={reorderAboutSlides}
-        />
-        <ProjectsSection projects={content.projects} reorderProjects={reorderProjects} />
-        <ArchiveSection
-          items={content.designArchive}
-          saveArchiveItem={saveArchiveItem}
-          deleteArchiveItem={deleteArchiveItem}
-          reorderArchiveItems={reorderArchiveItems}
-        />
-        <SocialSection links={content.socialLinks} saveSocialLink={saveSocialLink} deleteSocialLink={deleteSocialLink} />
+    <AdminToastProvider initialToast={initialToast}>
+      <div className={styles.workspace}>
+        <nav className={styles.navRail} aria-label="Разделы админки">
+          <a href="#about">Фото</a>
+          <a href="#projects">Кейсы</a>
+          <a href="#archive">Архив</a>
+          <a href="#social">Соцсети</a>
+        </nav>
+        <div className={styles.sections}>
+          <AboutSection
+            slides={content.slides}
+            saveAboutSlide={saveAboutSlide}
+            deleteAboutSlide={deleteAboutSlide}
+            reorderAboutSlides={reorderAboutSlides}
+          />
+          <ProjectsSection projects={content.projects} reorderProjects={reorderProjects} />
+          <ArchiveSection
+            items={content.designArchive}
+            saveArchiveItem={saveArchiveItem}
+            deleteArchiveItem={deleteArchiveItem}
+            reorderArchiveItems={reorderArchiveItems}
+          />
+          <SocialSection links={content.socialLinks} saveSocialLink={saveSocialLink} deleteSocialLink={deleteSocialLink} />
+        </div>
       </div>
-    </div>
+    </AdminToastProvider>
   );
 }
 
 function AboutSection({ slides, saveAboutSlide, deleteAboutSlide, reorderAboutSlides }) {
   const [items, setItems] = useState(slides);
   const [isPending, startTransition] = useTransition();
+  const runAction = useToastAction();
   const sensors = useAdminSensors();
   const ids = useMemo(() => items.map((item) => item.id), [items]);
 
@@ -135,7 +158,9 @@ function AboutSection({ slides, saveAboutSlide, deleteAboutSlide, reorderAboutSl
         current.findIndex((item) => item.id === active.id),
         current.findIndex((item) => item.id === over.id)
       );
-      startTransition(() => reorderAboutSlides(reorderFormData("ids", next.map((item) => item.id))));
+      startTransition(() =>
+        runAction(reorderAboutSlides, reorderFormData("ids", next.map((item) => item.id)), "Порядок фотографий обновлён")
+      );
       return next;
     });
   }
@@ -156,7 +181,7 @@ function AboutSection({ slides, saveAboutSlide, deleteAboutSlide, reorderAboutSl
             {items.map((slide, index) => (
               <SortableRow key={slide.id} id={slide.id}>
                 <PreviewImage className={styles.rowImage} src={slide.image_url} alt={slide.alt} />
-                <form action={saveAboutSlide} className={styles.rowForm}>
+                <form action={(formData) => runAction(saveAboutSlide, formData, "Фотография обновлена")} className={styles.rowForm}>
                   <input name="id" type="hidden" defaultValue={slide.id} />
                   <input name="position" type="hidden" value={index} readOnly />
                   <input name="alt" type="hidden" defaultValue={slide.alt || "Фото обо мне"} />
@@ -170,7 +195,11 @@ function AboutSection({ slides, saveAboutSlide, deleteAboutSlide, reorderAboutSl
                     На сайте
                   </label>
                   <button type="submit">Сохранить</button>
-                  <button formAction={deleteAboutSlide} className={styles.danger} type="submit">
+                  <button
+                    formAction={(formData) => runAction(deleteAboutSlide, formData, "Фотография удалена")}
+                    className={styles.danger}
+                    type="submit"
+                  >
                     Удалить
                   </button>
                 </form>
@@ -180,7 +209,7 @@ function AboutSection({ slides, saveAboutSlide, deleteAboutSlide, reorderAboutSl
         </SortableContext>
       </DndContext>
 
-      <form action={saveAboutSlide} className={styles.inlineCreate}>
+      <form action={(formData) => runAction(saveAboutSlide, formData, "Фотография добавлена")} className={styles.inlineCreate}>
         <input name="position" type="hidden" value={items.length} readOnly />
         <input name="alt" type="hidden" value="Фото обо мне" readOnly />
         <input name="is_visible" type="hidden" value="on" readOnly />
@@ -197,6 +226,7 @@ function AboutSection({ slides, saveAboutSlide, deleteAboutSlide, reorderAboutSl
 function ProjectsSection({ projects, reorderProjects }) {
   const [items, setItems] = useState(projects);
   const [isPending, startTransition] = useTransition();
+  const runAction = useToastAction();
   const sensors = useAdminSensors();
   const ids = useMemo(() => items.map((item) => item.slug), [items]);
 
@@ -210,7 +240,9 @@ function ProjectsSection({ projects, reorderProjects }) {
         current.findIndex((item) => item.slug === active.id),
         current.findIndex((item) => item.slug === over.id)
       );
-      startTransition(() => reorderProjects(reorderFormData("slugs", next.map((item) => item.slug))));
+      startTransition(() =>
+        runAction(reorderProjects, reorderFormData("slugs", next.map((item) => item.slug)), "Порядок кейсов обновлён")
+      );
       return next;
     });
   }
@@ -253,6 +285,7 @@ function ArchiveSection({ items: initialItems, saveArchiveItem, deleteArchiveIte
   const [items, setItems] = useState(initialItems);
   const [editing, setEditing] = useState(null);
   const [isPending, startTransition] = useTransition();
+  const runAction = useToastAction();
   const sensors = useAdminSensors();
   const ids = useMemo(() => items.map((item) => item.slug), [items]);
 
@@ -266,7 +299,9 @@ function ArchiveSection({ items: initialItems, saveArchiveItem, deleteArchiveIte
         current.findIndex((item) => item.slug === active.id),
         current.findIndex((item) => item.slug === over.id)
       );
-      startTransition(() => reorderArchiveItems(reorderFormData("slugs", next.map((item) => item.slug))));
+      startTransition(() =>
+        runAction(reorderArchiveItems, reorderFormData("slugs", next.map((item) => item.slug)), "Порядок работ обновлён")
+      );
       return next;
     });
   }
@@ -313,10 +348,21 @@ function ArchiveSection({ items: initialItems, saveArchiveItem, deleteArchiveIte
 
 function ArchiveModal({ item, saveArchiveItem, deleteArchiveItem, onClose }) {
   const isNew = item.slug === "new";
+  const runAction = useToastAction();
+
+  async function handleSave(formData) {
+    const saved = await runAction(saveArchiveItem, formData, isNew ? "Работа добавлена" : "Работа обновлена");
+    if (saved) onClose();
+  }
+
+  async function handleDelete(formData) {
+    const deleted = await runAction(deleteArchiveItem, formData, "Работа удалена");
+    if (deleted) onClose();
+  }
 
   return (
     <div className={styles.modalBackdrop} onMouseDown={onClose}>
-      <form action={saveArchiveItem} className={styles.modalPanel} onMouseDown={(event) => event.stopPropagation()}>
+      <form action={handleSave} className={styles.modalPanel} onMouseDown={(event) => event.stopPropagation()}>
         <div className={styles.modalHead}>
           <div>
             <p className={styles.kicker}>{isNew ? "New archive item" : item.slug}</p>
@@ -359,7 +405,7 @@ function ArchiveModal({ item, saveArchiveItem, deleteArchiveItem, onClose }) {
         <div className={styles.actions}>
           <button type="submit">Сохранить</button>
           {!isNew ? (
-            <button formAction={deleteArchiveItem} className={styles.danger} type="submit">
+            <button formAction={handleDelete} className={styles.danger} type="submit">
               Удалить
             </button>
           ) : null}
@@ -370,6 +416,8 @@ function ArchiveModal({ item, saveArchiveItem, deleteArchiveItem, onClose }) {
 }
 
 function SocialSection({ links, saveSocialLink, deleteSocialLink }) {
+  const runAction = useToastAction();
+
   return (
     <section id="social" className={`${styles.panel} ${styles.secondaryPanel}`}>
       <div className={styles.sectionHead}>
@@ -380,7 +428,11 @@ function SocialSection({ links, saveSocialLink, deleteSocialLink }) {
       </div>
       <div className={styles.socialList}>
         {links.map((link, index) => (
-          <form key={link.label} action={saveSocialLink} className={styles.socialRow}>
+          <form
+            key={link.label}
+            action={(formData) => runAction(saveSocialLink, formData, "Ссылка обновлена")}
+            className={styles.socialRow}
+          >
             <input name="position" type="hidden" defaultValue={index} />
             <label>
               Label
@@ -395,12 +447,16 @@ function SocialSection({ links, saveSocialLink, deleteSocialLink }) {
               На сайте
             </label>
             <button type="submit">Сохранить</button>
-            <button formAction={deleteSocialLink} className={styles.danger} type="submit">
+            <button
+              formAction={(formData) => runAction(deleteSocialLink, formData, "Ссылка удалена")}
+              className={styles.danger}
+              type="submit"
+            >
               Удалить
             </button>
           </form>
         ))}
-        <form action={saveSocialLink} className={styles.socialRow}>
+        <form action={(formData) => runAction(saveSocialLink, formData, "Ссылка добавлена")} className={styles.socialRow}>
           <input name="position" type="hidden" defaultValue={links.length} />
           <label>
             Label

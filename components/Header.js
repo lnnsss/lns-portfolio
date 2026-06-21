@@ -33,9 +33,9 @@ export default function Header() {
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.72, delay: 1.42, ease: [0.22, 1, 0.36, 1] }}
     >
-      <a className={styles.logo} href="#top" aria-label="lns portfolio - на главную">
-        <span className={styles.logoStrong}>LNS</span>
-        <span className={styles.logoLight}>NOSTYLIST</span>
+      <a className={styles.logo} href="#top" aria-label="lnsnostylist — на главную">
+        <span className={styles.logoStrong}>lns</span>
+        <span className={styles.logoLight}>nostylist</span>
       </a>
       <button
         className={styles.menuButton}

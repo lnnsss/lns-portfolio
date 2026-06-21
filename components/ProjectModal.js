@@ -5,6 +5,31 @@ import { AnimatePresence, motion } from "framer-motion";
 import SmartImage from "./SmartImage";
 import styles from "./ProjectModal.module.css";
 
+const VIDEO_URL_PATTERN = /\.(mp4|webm|mov|m4v|ogv)(?:$|[?#])/i;
+
+function isVideoUrl(src) {
+  return typeof src === "string" && VIDEO_URL_PATTERN.test(src);
+}
+
+function GalleryMedia({ src, projectTitle, index, onOpen }) {
+  if (isVideoUrl(src)) {
+    return (
+      <div className={`${styles.galleryItem} ${styles.galleryVideo}`}>
+        <video controls playsInline preload="metadata" aria-label={`${projectTitle} — видео ${index + 1}`}>
+          <source src={src} />
+          Ваш браузер не поддерживает видео.
+        </video>
+      </div>
+    );
+  }
+
+  return (
+    <button className={styles.galleryItem} onClick={() => onOpen(src)}>
+      <SmartImage src={src} alt={`${projectTitle} — изображение ${index + 1}`} width={1200} height={900} />
+    </button>
+  );
+}
+
 export default function ProjectModal({ project, onClose }) {
   const [activeImage, setActiveImage] = useState(null);
 
@@ -60,39 +85,46 @@ export default function ProjectModal({ project, onClose }) {
               <h2 id={`${project.id}-title`}>{project.title}</h2>
             </div>
 
-            <div className={styles.overview}>
+            <div className={styles.caseIntro}>
               <button className={styles.heroImage} onClick={() => setActiveImage(project.image)}>
-                <SmartImage src={project.image} alt={project.title} width={1200} height={760} priority />
+                <SmartImage src={project.image} alt={project.title} width={1000} height={1250} priority />
               </button>
-              <dl>
-                <div>
-                  <dt>Роль</dt>
-                  <dd>{project.role}</dd>
+              <div className={styles.caseCopy}>
+                <div className={styles.details}>
+                  <p>{project.summary}</p>
                 </div>
-                <div>
-                  <dt>Инструменты</dt>
-                  <dd>{project.technologies.join(" · ")}</dd>
-                </div>
-                <div>
-                  <dt>Ссылка</dt>
-                  <dd>
-                    <a href={project.liveUrl} target="_blank" rel="noreferrer">
-                      Открыть проект
-                    </a>
-                  </dd>
-                </div>
-              </dl>
-            </div>
-
-            <div className={styles.details}>
-              <p>{project.summary}</p>
+                <dl>
+                  <div>
+                    <dt>Роль</dt>
+                    <dd>{project.role}</dd>
+                  </div>
+                  <div>
+                    <dt>Инструменты</dt>
+                    <dd>{project.technologies.join(" · ")}</dd>
+                  </div>
+                  {project.liveUrl ? (
+                    <div>
+                      <dt>Ссылка</dt>
+                      <dd>
+                        <a href={project.liveUrl} target="_blank" rel="noreferrer">
+                          Открыть проект ↗
+                        </a>
+                      </dd>
+                    </div>
+                  ) : null}
+                </dl>
+              </div>
             </div>
 
             <div className={styles.gallery} aria-label="Галерея проекта">
-              {project.gallery.map((image, index) => (
-                <button key={`${project.id}-${image}-${index}`} onClick={() => setActiveImage(image)}>
-                  <SmartImage src={image} alt={`${project.title} - изображение ${index + 1}`} width={720} height={520} />
-                </button>
+              {project.gallery.map((media, index) => (
+                <GalleryMedia
+                  key={`${project.id}-${media}-${index}`}
+                  src={media}
+                  projectTitle={project.title}
+                  index={index}
+                  onOpen={setActiveImage}
+                />
               ))}
             </div>
           </motion.article>

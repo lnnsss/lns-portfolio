@@ -31,20 +31,18 @@
 .logo {
   width: max-content;
   color: white;
-  font-family: var(--font-ui);
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: clamp(18px, 2vw, 28px);
-  letter-spacing: -0.075em;
   line-height: 1;
-  text-transform: uppercase;
 }
 
 .logoStrong {
-  font-weight: 850;
+  font-weight: 700;
   font-style: italic;
 }
 
 .logoLight {
-  font-weight: 300;
+  font-weight: 100;
   font-style: italic;
 }
 

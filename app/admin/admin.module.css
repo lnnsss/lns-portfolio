@@ -267,6 +267,14 @@
   aspect-ratio: 4 / 3;
 }
 
+.galleryItem video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+  background: #050505;
+}
+
 .removeImage {
   position: absolute;
   right: 8px;
@@ -485,6 +493,67 @@
 
 .danger:hover {
   background: transparent !important;
+}
+
+.toast {
+  position: fixed;
+  z-index: 100;
+  right: clamp(14px, 2.5vw, 32px);
+  bottom: clamp(14px, 2.5vw, 32px);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  width: min(390px, calc(100vw - 28px));
+  border: 1px solid #77f7c8;
+  padding: 12px 12px 12px 14px;
+  color: #f7f3ea;
+  background: rgba(11, 11, 11, 0.96);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(16px);
+  animation: toastIn 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.toastError {
+  border-color: #ff6b6b;
+}
+
+.toastMark {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  color: #050505;
+  background: #77f7c8;
+  font-weight: 800;
+}
+
+.toastError .toastMark {
+  background: #ff6b6b;
+}
+
+.toast button {
+  border: 0;
+  padding: 4px 7px;
+  color: #9a9a9a;
+  background: transparent;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.toast button:hover {
+  color: white;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .error {

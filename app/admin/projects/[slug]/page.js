@@ -10,8 +10,9 @@ async function isAdmin(supabase) {
   return !error && data === true;
 }
 
-export default async function ProjectEditPage({ params }) {
+export default async function ProjectEditPage({ params, searchParams }) {
   const { slug } = await params;
+  const { notice } = await searchParams;
   const supabase = await createSupabaseServerClient();
   if (!supabase) redirect("/admin/login?error=env");
 
@@ -58,7 +59,17 @@ export default async function ProjectEditPage({ params }) {
           <p>{user.email}</p>
         </div>
       </header>
-      <ProjectEditor project={project} isNew={isNew} />
+      <ProjectEditor
+        project={project}
+        isNew={isNew}
+        initialToast={
+          notice === "project-created"
+            ? { message: "Кейс добавлен", type: "success" }
+            : notice === "project-updated"
+              ? { message: "Кейс обновлён", type: "success" }
+              : null
+        }
+      />
     </main>
   );
 }

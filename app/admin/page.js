@@ -27,7 +27,8 @@ async function isAdmin(supabase) {
   return !error && data === true;
 }
 
-export default async function AdminPage() {
+export default async function AdminPage({ searchParams }) {
+  const { notice } = await searchParams;
   const supabase = await createSupabaseServerClient();
   if (!supabase) redirect("/admin/login?error=env");
 
@@ -64,6 +65,7 @@ export default async function AdminPage() {
       ) : (
         <AdminDashboard
           content={content}
+          initialToast={notice === "project-deleted" ? { message: "Кейс удалён", type: "success" } : null}
           saveAboutSlide={saveAboutSlide}
           deleteAboutSlide={deleteAboutSlide}
           reorderAboutSlides={reorderAboutSlides}

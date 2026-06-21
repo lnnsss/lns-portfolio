@@ -19,7 +19,14 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { deleteProject, saveProject, uploadProjectGalleryFiles } from "../../actions";
+import { AdminToastProvider, useAdminToast } from "../../AdminToast";
 import styles from "../../admin.module.css";
+
+const VIDEO_URL_PATTERN = /\.(mp4|webm|mov|m4v|ogv)(?:$|[?#])/i;
+
+function isVideoUrl(src) {
+  return typeof src === "string" && VIDEO_URL_PATTERN.test(src);
+}
 
 function SortableGalleryItem({ image, children }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: image });
@@ -38,11 +45,20 @@ function SortableGalleryItem({ image, children }) {
   );
 }
 
-export default function ProjectEditor({ project, isNew }) {
+export default function ProjectEditor({ project, isNew, initialToast }) {
+  return (
+    <AdminToastProvider initialToast={initialToast}>
+      <ProjectEditorContent project={project} isNew={isNew} />
+    </AdminToastProvider>
+  );
+}
+
+function ProjectEditorContent({ project, isNew }) {
   const [gallery, setGallery] = useState(project.gallery || []);
   const [coverPreview, setCoverPreview] = useState(project.image_url || "");
   const [isPending, startTransition] = useTransition();
   const fileInputRef = useRef(null);
+  const showToast = useAdminToast();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -77,10 +93,20 @@ export default function ProjectEditor({ project, isNew }) {
     files.forEach((file) => formData.append("gallery_files", file));
 
     startTransition(async () => {
-      const urls = await uploadProjectGalleryFiles(formData);
-      setGallery((current) => [...current, ...urls]);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      try {
+        const urls = await uploadProjectGalleryFiles(formData);
+        setGallery((current) => [...current, ...urls]);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        showToast(urls.length > 1 ? "Изображения добавлены" : "Изображение добавлено");
+      } catch (error) {
+        showToast(error?.message || "Не удалось загрузить изображения", "error");
+      }
     });
+  }
+
+  function removeGalleryImage(image) {
+    setGallery((current) => current.filter((item) => item !== image));
+    showToast("Изображение удалено из галереи");
   }
 
   return (
@@ -156,23 +182,27 @@ export default function ProjectEditor({ project, isNew }) {
       <section className={styles.galleryPanel}>
         <div className={styles.sectionHead}>
           <div>
-            <p className={styles.kicker}>Gallery</p>
-            <h2>Галерея</h2>
+            <p className={styles.kicker}>Media gallery</p>
+            <h2>Фото и видео</h2>
           </div>
           <label className={styles.fileControl}>
-            Добавить картинки
-            <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleGalleryUpload} />
+            Добавить медиа
+            <input ref={fileInputRef} type="file" accept="image/*,video/*" multiple onChange={handleGalleryUpload} />
           </label>
         </div>
-        <p className={styles.statusLine}>{isPending ? "Загружаю изображения..." : "Перетащи изображения, чтобы поменять порядок."}</p>
+        <p className={styles.statusLine}>{isPending ? "Загружаю медиа..." : "Перетащи фото и видео, чтобы поменять порядок."}</p>
 
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={galleryIds} strategy={rectSortingStrategy}>
             <div className={styles.galleryGrid}>
               {gallery.map((image) => (
                 <SortableGalleryItem key={image} image={image}>
-                  <img src={image} alt="Изображение галереи" loading="lazy" />
-                  <button type="button" className={styles.removeImage} onClick={() => setGallery((current) => current.filter((item) => item !== image))}>
+                  {isVideoUrl(image) ? (
+                    <video src={image} controls playsInline preload="metadata" aria-label="Видео галереи" />
+                  ) : (
+                    <img src={image} alt="Изображение галереи" loading="lazy" />
+                  )}
+                  <button type="button" className={styles.removeImage} onClick={() => removeGalleryImage(image)}>
                     Удалить
                   </button>
                 </SortableGalleryItem>

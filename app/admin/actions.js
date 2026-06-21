@@ -173,6 +173,7 @@ export async function deleteAboutSlide(formData) {
 export async function saveProject(formData) {
   const supabase = await requireAdminClient();
   const originalSlug = optionalString(formData, "original_slug");
+  const isNew = !originalSlug || originalSlug === "new";
   const title = requiredString(formData, "title");
   const slug = slugValue(requiredString(formData, "slug") || title);
   const imageUrl = await uploadFileIfPresent(supabase, formData, "image", `projects/${slug}`);
@@ -204,7 +205,7 @@ export async function saveProject(formData) {
   if (error) throw new Error(error.message);
 
   refreshProject(slug);
-  redirect(`/admin/projects/${slug}`);
+  redirect(`/admin/projects/${slug}?notice=${isNew ? "project-created" : "project-updated"}`);
 }
 
 export async function deleteProject(formData) {
@@ -214,7 +215,7 @@ export async function deleteProject(formData) {
   if (error) throw new Error(error.message);
 
   refresh();
-  redirect("/admin#projects");
+  redirect("/admin?notice=project-deleted#projects");
 }
 
 export async function uploadProjectGalleryFiles(formData) {
