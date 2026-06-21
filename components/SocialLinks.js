@@ -1,17 +1,6 @@
 import styles from "./SocialLinks.module.css";
 
-const links = [
-  ["EMAIL", "mailto:bezborodnikovtimur@gmail.com"],
-  ["VK", "https://vk.com/l1lines"],
-  ["MAX", "https://max.ru/u/f9LHodD0cOIh49rvqQYNbhq-jsi0h2Oo_V_FmVt5ZW4K7YYxenIVBbO0b3k"],
-  ["TELEGRAM", "https://t.me/lnsnostylist"],
-  ["INSTAGRAM", "https://www.instagram.com/lnsnostylist"],
-  ["PINTEREST", "https://ru.pinterest.com/lnsnostylist/"],
-  ["BEHANCE", "https://www.behance.net/lnsnostylist"],
-  ["GITHUB", "https://github.com/lnnsss"]
-];
-
-export default function SocialLinks() {
+export default function SocialLinks({ links }) {
   return (
     <section id="social" className={styles.socials} aria-labelledby="social-title">
       <span className="section-kicker">Соцсети и связь</span>
@@ -19,7 +8,7 @@ export default function SocialLinks() {
         Связаться с lnsnostylist
       </h2>
       <div>
-        {links.map(([label, href], index) => (
+        {links.map(({ label, href }, index) => (
           <a
             key={label}
             href={href}

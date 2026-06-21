@@ -63,3 +63,4 @@ Thumbs.db
 # Test tooling
 playwright-report/
 test-results/
+.vercel

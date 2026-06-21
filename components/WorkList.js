@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { motion, useMotionValue, useSpring, useMotionValueEvent } from "framer-motion";
 import ProjectModal from "./ProjectModal";
+import SmartImage from "./SmartImage";
 import styles from "./WorkList.module.css";
 
 export default function WorkList({ projects }) {
@@ -86,7 +86,7 @@ export default function WorkList({ projects }) {
               }}
             >
               <span className={styles.card}>
-                <Image src={project.image} alt={`${project.title} - обложка проекта`} width={760} height={950} />
+                <SmartImage src={project.image} alt={`${project.title} - обложка проекта`} width={760} height={950} />
                 <span className={styles.cardShade} />
                 <span className={styles.cardTitle}>{project.title}</span>
                 <span className={styles.cardMeta}>

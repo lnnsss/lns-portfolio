@@ -1,43 +1,32 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { motion } from "framer-motion";
+import SmartImage from "./SmartImage";
 import styles from "./About.module.css";
 
 const slideDuration = 4600;
 
-const aboutSlides = [
-  {
-    src: "/aboutMe/1.png",
-    alt: "Портрет Тимура"
-  },
-  {
-    src: "/aboutMe/2.png",
-    alt: "Тимур в рабочей визуальной среде"
-  },
-  {
-    src: "/aboutMe/3.png",
-    alt: "Тимур, фото для блока обо мне"
-  }
-];
-
-export default function About() {
+export default function About({ content }) {
+  const aboutSlides = content.slides.length ? content.slides : [];
   const [activeSlide, setActiveSlide] = useState(0);
 
   useEffect(() => {
+    if (aboutSlides.length < 2) return undefined;
+
     const timer = window.setTimeout(() => {
       setActiveSlide((index) => (index + 1) % aboutSlides.length);
     }, slideDuration);
 
     return () => window.clearTimeout(timer);
-  }, [activeSlide]);
+  }, [activeSlide, aboutSlides.length]);
 
   function goToSlide(index) {
     setActiveSlide(index);
   }
 
   function showNextSlide() {
+    if (!aboutSlides.length) return;
     setActiveSlide((index) => (index + 1) % aboutSlides.length);
   }
 
@@ -52,7 +41,7 @@ export default function About() {
       >
         <div className={styles.imageFrame}>
           {aboutSlides.map((slide, index) => (
-            <Image
+            <SmartImage
               key={slide.src}
               className={`${styles.image} ${index === activeSlide ? styles.imageActive : ""}`}
               src={slide.src}
@@ -91,25 +80,12 @@ export default function About() {
         viewport={{ once: true, margin: "-80px" }}
         transition={{ duration: 0.75, delay: 0.08 }}
       >
-        <span className="section-kicker">Обо мне</span>
-        <h2>Я Тимур - графический дизайнер и веб-разработчик</h2>
+        <span className="section-kicker">{content.kicker}</span>
+        <h2>{content.title}</h2>
         <div className={styles.text}>
-          <p>
-            Мне 20 лет, живу в Казани. Работаю на стыке дизайна и разработки,
-            создавая визуальные проекты, в которых важны не только внешний вид,
-            но и сильная идея.
-          </p>
-          <p>
-            Я умею брать ответственность за результат, быстро погружаться в новые
-            задачи и находить решения там, где другие видят сложности. Люблю
-            нестандартно мыслить, экспериментировать и искать свежий взгляд, но
-            всегда довожу идеи до понятного и качественного результата.
-          </p>
-          <p>
-            Для меня хороший проект - это сочетание сильной идеи, продуманного
-            исполнения и смелых решений, которые остаются актуальными и спустя
-            время.
-          </p>
+          {content.paragraphs.map((paragraph) => (
+            <p key={paragraph}>{paragraph}</p>
+          ))}
         </div>
       </motion.div>
     </section>

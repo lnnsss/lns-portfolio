@@ -1,0 +1,548 @@
+.adminShell {
+  min-height: 100svh;
+  padding: clamp(18px, 3vw, 42px);
+  color: #f7f3ea;
+  background: #050505;
+}
+
+.header,
+.loginPanel,
+.panel,
+.notice {
+  border: 1px solid #2a2a2a;
+  background: #0b0b0b;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-start;
+  padding: clamp(18px, 3vw, 30px);
+  margin-bottom: 18px;
+}
+
+.header h1,
+.loginPanel h1,
+.panel h2,
+.notice h2 {
+  margin: 0;
+  font-family: var(--font-jumbo);
+  font-weight: 800;
+  line-height: 0.95;
+}
+
+.header h1,
+.loginPanel h1 {
+  font-size: clamp(42px, 7vw, 88px);
+}
+
+.panel h2,
+.notice h2 {
+  font-size: clamp(28px, 4vw, 52px);
+}
+
+.header p,
+.sectionHead p,
+.notice p,
+.statusLine {
+  margin: 8px 0 0;
+  color: #b8b8b8;
+  line-height: 1.45;
+}
+
+.kicker {
+  margin: 0 0 10px;
+  color: #9a9a9a;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.navRail {
+  position: sticky;
+  top: 18px;
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid #242424;
+  background: #080808;
+}
+
+.navRail a,
+.primaryLink,
+.rowAction,
+.stickyActions a {
+  color: #f7f3ea;
+  text-decoration: none;
+}
+
+.navRail a,
+.rowAction,
+.primaryLink {
+  border: 1px solid transparent;
+  padding: 10px 12px;
+}
+
+.navRail a:hover,
+.rowAction:hover,
+.primaryLink:hover,
+.stickyActions a:hover {
+  border-color: #77f7c8;
+}
+
+.sections {
+  display: grid;
+  gap: 18px;
+}
+
+.loginPanel {
+  width: min(100%, 520px);
+  padding: clamp(22px, 4vw, 42px);
+  margin: 10svh auto 0;
+}
+
+.panel,
+.notice {
+  padding: clamp(16px, 2.5vw, 28px);
+}
+
+.secondaryPanel {
+  background: #080808;
+}
+
+.sectionHead,
+.modalHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.list,
+.socialList {
+  display: grid;
+  gap: 8px;
+}
+
+.listRow,
+.socialRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  min-height: 76px;
+  border: 1px solid #242424;
+  padding: 10px;
+  background: #101010;
+}
+
+.dragging {
+  z-index: 4;
+  opacity: 0.74;
+}
+
+.dragHandle {
+  width: 34px !important;
+  height: 34px;
+  padding: 0 !important;
+  color: #9a9a9a !important;
+  cursor: grab;
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.rowImage {
+  width: 86px;
+  height: 58px;
+  object-fit: cover;
+  border: 1px solid #2a2a2a;
+  background: #050505;
+}
+
+.previewFallback {
+  display: grid;
+  place-items: center;
+  color: #888;
+  border: 1px solid #2a2a2a;
+  background: #050505;
+}
+
+.rowForm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.projectTitle {
+  display: grid;
+  gap: 4px;
+}
+
+.projectTitle strong {
+  font-size: 18px;
+}
+
+.projectTitle span {
+  color: #9a9a9a;
+  font-size: 13px;
+}
+
+.inlineCreate {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 12px;
+  border: 1px dashed #343434;
+  padding: 12px;
+}
+
+.archiveGrid,
+.galleryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+.archiveTile,
+.galleryItem {
+  position: relative;
+  min-width: 0;
+  border: 1px solid #242424;
+  background: #101010;
+}
+
+.tileDrag {
+  position: absolute;
+  z-index: 2;
+  top: 8px;
+  left: 8px;
+}
+
+.archiveButton {
+  display: grid;
+  width: 100% !important;
+  gap: 8px;
+  border: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  text-align: left;
+}
+
+.archiveButton span {
+  min-height: 38px;
+  padding: 0 10px 10px;
+  color: #f7f3ea;
+}
+
+.archiveImage,
+.galleryItem img,
+.coverBox img,
+.modalPreview img,
+.modalPreview .previewFallback {
+  width: 100%;
+  object-fit: cover;
+  background: #050505;
+}
+
+.archiveImage {
+  aspect-ratio: 4 / 3;
+}
+
+.galleryItem img {
+  display: block;
+  aspect-ratio: 4 / 3;
+}
+
+.removeImage {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  background: rgba(5, 5, 5, 0.86) !important;
+}
+
+.modalBackdrop {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(0, 0, 0, 0.74);
+}
+
+.modalPanel {
+  width: min(720px, 100%);
+  max-height: min(760px, calc(100svh - 36px));
+  overflow: auto;
+  border: 1px solid #343434;
+  padding: clamp(16px, 3vw, 26px);
+  background: #0b0b0b;
+}
+
+.modalPanel h3 {
+  margin: 0;
+  font-size: clamp(26px, 4vw, 42px);
+  line-height: 1;
+}
+
+.modalPreview {
+  margin-bottom: 16px;
+}
+
+.modalPreview img,
+.modalPreview .previewFallback {
+  aspect-ratio: 16 / 10;
+}
+
+.editorForm {
+  display: grid;
+  gap: 18px;
+}
+
+.editorLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 18px;
+  align-items: start;
+}
+
+.editorMain,
+.editorSide,
+.galleryPanel {
+  border: 1px solid #2a2a2a;
+  padding: clamp(16px, 2.5vw, 28px);
+  background: #0b0b0b;
+}
+
+.editorSide {
+  position: sticky;
+  top: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.coverBox {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+  color: #888;
+  border: 1px solid #242424;
+  background: #050505;
+  overflow: hidden;
+}
+
+.coverBox img {
+  height: 100%;
+}
+
+.form,
+.formGrid {
+  display: grid;
+  gap: 14px;
+}
+
+.formGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+.form label,
+.formGrid label,
+.socialRow label,
+.modalPanel label,
+.editorForm label {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  color: #cfcfcf;
+  font-size: 13px;
+}
+
+.checkbox {
+  display: flex !important;
+  gap: 9px !important;
+  align-items: center;
+}
+
+.checkbox input {
+  width: auto !important;
+}
+
+.fileControl {
+  width: max-content;
+  max-width: 100%;
+  border: 1px solid #343434;
+  padding: 10px 12px;
+  color: #f7f3ea !important;
+  background: #050505;
+  cursor: pointer;
+}
+
+.fileControl input {
+  display: none;
+}
+
+.form input,
+.formGrid input,
+.formGrid textarea,
+.socialRow input,
+.modalPanel input,
+.editorForm input,
+.editorForm textarea {
+  width: 100%;
+  border: 1px solid #343434;
+  border-radius: 0;
+  padding: 11px 12px;
+  color: white;
+  background: #050505;
+}
+
+.form input:focus,
+.formGrid input:focus,
+.formGrid textarea:focus,
+.socialRow input:focus,
+.modalPanel input:focus,
+.editorForm input:focus,
+.editorForm textarea:focus {
+  outline: 1px solid #77f7c8;
+}
+
+.form textarea,
+.formGrid textarea,
+.editorForm textarea {
+  resize: vertical;
+}
+
+.socialRow {
+  grid-template-columns: 120px minmax(180px, 1fr) auto auto auto;
+}
+
+.actions,
+.stickyActions,
+.stickyActions div {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.actions {
+  margin-top: 16px;
+}
+
+.stickyActions {
+  position: sticky;
+  z-index: 10;
+  bottom: 12px;
+  justify-content: space-between;
+  border: 1px solid #343434;
+  padding: 12px;
+  background: rgba(11, 11, 11, 0.94);
+  backdrop-filter: blur(12px);
+}
+
+.adminShell button,
+.stickyActions a {
+  width: max-content;
+  border: 1px solid #343434;
+  border-radius: 0;
+  padding: 11px 17px;
+  color: white;
+  background: #050505;
+  cursor: pointer;
+}
+
+.adminShell button:hover {
+  border-color: #77f7c8;
+}
+
+.loginPanel button {
+  width: 100%;
+  text-align: center;
+}
+
+.danger {
+  border-color: #ff6b6b !important;
+  color: white !important;
+  background: #5d1717 !important;
+}
+
+.danger:hover {
+  background: transparent !important;
+}
+
+.error {
+  color: #ff9a9a;
+}
+
+.notice code {
+  color: white;
+}
+
+@media (max-width: 900px) {
+  .workspace,
+  .editorLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .navRail,
+  .editorSide {
+    position: static;
+  }
+
+  .navRail {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .navRail a {
+    text-align: center;
+  }
+
+  .socialRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .header,
+  .sectionHead,
+  .modalHead,
+  .stickyActions {
+    display: grid;
+  }
+
+  .formGrid,
+  .listRow {
+    grid-template-columns: 1fr;
+  }
+
+  .rowForm {
+    justify-content: flex-start;
+  }
+
+  .rowImage {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 10;
+  }
+
+  .navRail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

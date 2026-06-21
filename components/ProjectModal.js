@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
+import SmartImage from "./SmartImage";
 import styles from "./ProjectModal.module.css";
 
 export default function ProjectModal({ project, onClose }) {
@@ -62,7 +62,7 @@ export default function ProjectModal({ project, onClose }) {
 
             <div className={styles.overview}>
               <button className={styles.heroImage} onClick={() => setActiveImage(project.image)}>
-                <Image src={project.image} alt={project.title} width={1200} height={760} priority />
+                <SmartImage src={project.image} alt={project.title} width={1200} height={760} priority />
               </button>
               <dl>
                 <div>
@@ -91,7 +91,7 @@ export default function ProjectModal({ project, onClose }) {
             <div className={styles.gallery} aria-label="Галерея проекта">
               {project.gallery.map((image, index) => (
                 <button key={`${project.id}-${image}-${index}`} onClick={() => setActiveImage(image)}>
-                  <Image src={image} alt={`${project.title} - изображение ${index + 1}`} width={720} height={520} />
+                  <SmartImage src={image} alt={`${project.title} - изображение ${index + 1}`} width={720} height={520} />
                 </button>
               ))}
             </div>
@@ -119,7 +119,7 @@ export default function ProjectModal({ project, onClose }) {
                   exit={{ scale: 0.97, y: 16 }}
                   transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
                 >
-                  <Image src={activeImage} alt={`${project.title} - крупный просмотр`} width={1500} height={1100} />
+                  <SmartImage src={activeImage} alt={`${project.title} - крупный просмотр`} width={1500} height={1100} />
                 </motion.div>
               </motion.div>
             ) : null}

@@ -90,3 +90,46 @@ export const projects = [
       "Концепт интерфейса, где графическая дисциплина помогает данным читаться быстрее: спокойная сетка, понятные акценты и компоненты без визуальной тяжести. Веб-навык здесь используется для проверки логики и поведения."
   }
 ];
+
+export const aboutContent = {
+  kicker: "Обо мне",
+  title: "Я Тимур - графический дизайнер и веб-разработчик",
+  paragraphs: [
+    "Мне 20 лет, живу в Казани. Работаю на стыке дизайна и разработки, создавая визуальные проекты, в которых важны не только внешний вид, но и сильная идея.",
+    "Я умею брать ответственность за результат, быстро погружаться в новые задачи и находить решения там, где другие видят сложности. Люблю нестандартно мыслить, экспериментировать и искать свежий взгляд, но всегда довожу идеи до понятного и качественного результата.",
+    "Для меня хороший проект - это сочетание сильной идеи, продуманного исполнения и смелых решений, которые остаются актуальными и спустя время."
+  ],
+  slides: [
+    {
+      src: "/aboutMe/1.png",
+      alt: "Портрет Тимура"
+    },
+    {
+      src: "/aboutMe/2.png",
+      alt: "Тимур в рабочей визуальной среде"
+    },
+    {
+      src: "/aboutMe/3.png",
+      alt: "Тимур, фото для блока обо мне"
+    }
+  ]
+};
+
+export const designArchive = projects.map((project, index) => ({
+  id: project.id,
+  title: project.title,
+  image: project.image,
+  accent: project.accent,
+  position: index
+}));
+
+export const socialLinks = [
+  { label: "EMAIL", href: "mailto:bezborodnikovtimur@gmail.com" },
+  { label: "VK", href: "https://vk.com/l1lines" },
+  { label: "MAX", href: "https://max.ru/u/f9LHodD0cOIh49rvqQYNbhq-jsi0h2Oo_V_FmVt5ZW4K7YYxenIVBbO0b3k" },
+  { label: "TELEGRAM", href: "https://t.me/lnsnostylist" },
+  { label: "INSTAGRAM", href: "https://www.instagram.com/lnsnostylist" },
+  { label: "PINTEREST", href: "https://ru.pinterest.com/lnsnostylist/" },
+  { label: "BEHANCE", href: "https://www.behance.net/lnsnostylist" },
+  { label: "GITHUB", href: "https://github.com/lnnsss" }
+];

@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
+import SmartImage from "./SmartImage";
 import styles from "./DesignCarousel.module.css";
 
-export default function DesignCarousel({ projects }) {
-  const images = [...projects, ...projects, ...projects];
+export default function DesignCarousel({ items }) {
+  const images = [...items, ...items, ...items];
   const [progress, setProgress] = useState(0);
   const [activeImage, setActiveImage] = useState(null);
 
@@ -40,7 +40,7 @@ export default function DesignCarousel({ projects }) {
               style={{ "--accent": project.accent }}
               onClick={() => setActiveImage(project)}
             >
-              <Image src={project.image} alt={`${project.title} - дизайн-фрагмент`} width={680} height={500} />
+              <SmartImage src={project.image} alt={`${project.title} - дизайн-фрагмент`} width={680} height={500} />
               <span>{project.title}</span>
             </button>
           ))}
@@ -66,7 +66,7 @@ export default function DesignCarousel({ projects }) {
               exit={{ scale: 0.97, y: 16 }}
               transition={{ duration: 0.36, ease: [0.22, 1, 0.36, 1] }}
             >
-              <Image src={activeImage.image} alt={activeImage.title} width={1600} height={1100} />
+              <SmartImage src={activeImage.image} alt={activeImage.title} width={1600} height={1100} />
             </motion.div>
           </motion.div>
         ) : null}

@@ -9,9 +9,13 @@ import SocialLinks from "@/components/SocialLinks";
 import Footer from "@/components/Footer";
 import SelectionRandomizer from "@/components/SelectionRandomizer";
 import ClientOnly from "@/components/ClientOnly";
-import { projects } from "@/data/projects";
+import { getPortfolioContent } from "@/lib/content";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const content = await getPortfolioContent();
+
   return (
     <>
       <SelectionRandomizer />
@@ -19,12 +23,12 @@ export default function Home() {
         <Preloader />
         <Header />
         <main>
-          <Hero projects={projects} />
-          <About />
-          <WorkList projects={projects} />
+          <Hero />
+          <About content={content.about} />
+          <WorkList projects={content.projects} />
           <WhyMe />
-          <DesignCarousel projects={projects} />
-          <SocialLinks />
+          <DesignCarousel items={content.designArchive} />
+          <SocialLinks links={content.socialLinks} />
         </main>
         <Footer />
       </ClientOnly>
