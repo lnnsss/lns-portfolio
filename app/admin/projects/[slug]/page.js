@@ -1,14 +1,10 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import ProjectEditor from "./ProjectEditor";
-import styles from "../../admin.module.css";
+import AdminChrome from "../../AdminChrome";
+import { signOut } from "../../actions";
 
 export const dynamic = "force-dynamic";
-
-async function isAdmin(supabase) {
-  const { data, error } = await supabase.rpc("is_portfolio_admin");
-  return !error && data === true;
-}
 
 export default async function ProjectEditPage({ params, searchParams }) {
   const { slug } = await params;
@@ -16,12 +12,11 @@ export default async function ProjectEditPage({ params, searchParams }) {
   const supabase = await createSupabaseServerClient();
   if (!supabase) redirect("/admin/login?error=env");
 
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
+  const [userResult, accessResult] = await Promise.all([supabase.auth.getUser(), supabase.rpc("is_portfolio_admin")]);
+  const user = userResult.data.user;
 
   if (!user) redirect("/admin/login");
-  if (!(await isAdmin(supabase))) redirect("/admin");
+  if (accessResult.error || accessResult.data !== true) redirect("/admin");
 
   const isNew = slug === "new";
   let project = {
@@ -51,14 +46,7 @@ export default async function ProjectEditPage({ params, searchParams }) {
   }
 
   return (
-    <main className={styles.adminShell}>
-      <header className={styles.header}>
-        <div>
-          <p className={styles.kicker}>Case editor</p>
-          <h1>{isNew ? "Новый кейс" : project.title}</h1>
-          <p>{user.email}</p>
-        </div>
-      </header>
+    <AdminChrome activeSection="projects" email={user.email} signOut={signOut}>
       <ProjectEditor
         project={project}
         isNew={isNew}
@@ -70,6 +58,6 @@ export default async function ProjectEditPage({ params, searchParams }) {
               : null
         }
       />
-    </main>
+    </AdminChrome>
   );
 }

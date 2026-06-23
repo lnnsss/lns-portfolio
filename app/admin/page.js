@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getAdminContent } from "@/lib/content";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import AdminDashboard from "./AdminDashboard";
+import AdminChrome from "./AdminChrome";
 import {
   deleteAboutSlide,
   deleteArchiveItem,
@@ -22,38 +23,22 @@ export const metadata = {
 
 export const dynamic = "force-dynamic";
 
-async function isAdmin(supabase) {
-  const { data, error } = await supabase.rpc("is_portfolio_admin");
-  return !error && data === true;
-}
-
 export default async function AdminPage({ searchParams }) {
-  const { notice } = await searchParams;
+  const { notice, section: requestedSection } = await searchParams;
+  const section = ["projects", "photos", "archive", "social"].includes(requestedSection) ? requestedSection : "projects";
   const supabase = await createSupabaseServerClient();
   if (!supabase) redirect("/admin/login?error=env");
 
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
+  const [userResult, accessResult] = await Promise.all([supabase.auth.getUser(), supabase.rpc("is_portfolio_admin")]);
+  const user = userResult.data.user;
 
   if (!user) redirect("/admin/login");
 
-  const hasAccess = await isAdmin(supabase);
-  const content = hasAccess ? await getAdminContent(supabase) : null;
+  const hasAccess = !accessResult.error && accessResult.data === true;
+  const content = hasAccess ? await getAdminContent(supabase, section) : null;
 
   return (
-    <main className={styles.adminShell}>
-      <header className={styles.header}>
-        <div>
-          <p className={styles.kicker}>Portfolio CMS</p>
-          <h1>Админка</h1>
-          <p>{user.email}</p>
-        </div>
-        <form action={signOut}>
-          <button type="submit">Выйти</button>
-        </form>
-      </header>
-
+    <AdminChrome activeSection={section} email={user.email} signOut={signOut}>
       {!hasAccess ? (
         <section className={styles.notice}>
           <h2>Нет прав на редактирование</h2>
@@ -65,6 +50,7 @@ export default async function AdminPage({ searchParams }) {
       ) : (
         <AdminDashboard
           content={content}
+          activeSection={section}
           initialToast={notice === "project-deleted" ? { message: "Кейс удалён", type: "success" } : null}
           saveAboutSlide={saveAboutSlide}
           deleteAboutSlide={deleteAboutSlide}
@@ -77,6 +63,6 @@ export default async function AdminPage({ searchParams }) {
           deleteSocialLink={deleteSocialLink}
         />
       )}
-    </main>
+    </AdminChrome>
   );
 }

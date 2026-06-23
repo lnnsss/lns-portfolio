@@ -29,6 +29,8 @@ export default async function LoginPage({ searchParams }) {
         <p className={styles.kicker}>Admin</p>
         <h1>Вход</h1>
         {error === "login" ? <p className={styles.error}>Не получилось войти. Проверь email и пароль.</p> : null}
+        {error === "env" ? <p className={styles.error}>Админка временно не подключена к базе данных.</p> : null}
+        {error === "session" ? <p className={styles.error}>Сессия закончилась. Войди ещё раз.</p> : null}
         <form action={signIn} className={styles.form}>
           <label>
             Email

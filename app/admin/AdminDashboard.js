@@ -1,478 +1,317 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useMemo, useState, useTransition } from "react";
-import {
-  closestCenter,
-  DndContext,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors
-} from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-  rectSortingStrategy
-} from "@dnd-kit/sortable";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useCallback, useMemo, useState } from "react";
+import { useFormStatus } from "react-dom";
+import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { AdminToastProvider, useAdminToast } from "./AdminToast";
 import styles from "./admin.module.css";
 
-function SortButton({ attributes, listeners }) {
+const sectionCopy = {
+  projects: { title: "Кейсы", description: "Порядок и видимость работ на сайте." },
+  photos: { title: "Фото", description: "Фотографии в блоке «Обо мне»." },
+  archive: { title: "Архив", description: "Небольшие работы и визуальные эксперименты." },
+  social: { title: "Соцсети", description: "Ссылки в нижней части сайта." }
+};
+
+function SubmitButton({ children, className, pendingLabel = "Сохраняю…", ...props }) {
+  const { pending } = useFormStatus();
+  return <button className={className} disabled={pending} aria-busy={pending} {...props}>{pending ? pendingLabel : children}</button>;
+}
+
+function DragIcon() {
   return (
-    <button className={styles.dragHandle} type="button" aria-label="Перетащить" {...attributes} {...listeners}>
-      ::
-    </button>
+    <svg viewBox="0 0 18 18" aria-hidden="true">
+      <circle cx="6" cy="4" r="1" /><circle cx="12" cy="4" r="1" />
+      <circle cx="6" cy="9" r="1" /><circle cx="12" cy="9" r="1" />
+      <circle cx="6" cy="14" r="1" /><circle cx="12" cy="14" r="1" />
+    </svg>
   );
 }
 
-function SortableRow({ id, children }) {
+function Sortable({ id, className = "", children }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
-
   return (
-    <div
-      ref={setNodeRef}
-      className={`${styles.listRow} ${isDragging ? styles.dragging : ""}`}
-      style={{ transform: CSS.Transform.toString(transform), transition }}
-    >
-      <SortButton attributes={attributes} listeners={listeners} />
+    <div ref={setNodeRef} className={`${className} ${isDragging ? styles.dragging : ""}`} style={{ transform: CSS.Transform.toString(transform), transition }}>
+      <button className={styles.dragHandle} type="button" aria-label="Изменить порядок" {...attributes} {...listeners}><DragIcon /></button>
       {children}
     </div>
   );
 }
 
-function SortableTile({ id, children }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
-
-  return (
-    <div
-      ref={setNodeRef}
-      className={`${styles.archiveTile} ${isDragging ? styles.dragging : ""}`}
-      style={{ transform: CSS.Transform.toString(transform), transition }}
-    >
-      <div className={styles.tileDrag}>
-        <SortButton attributes={attributes} listeners={listeners} />
-      </div>
-      {children}
-    </div>
-  );
+function Preview({ src, alt, className = "" }) {
+  return src ? <Image className={className} src={src} alt={alt || ""} width={640} height={480} loading="lazy" unoptimized /> : <div className={`${styles.previewFallback} ${className}`}>Нет изображения</div>;
 }
 
-function reorderFormData(name, ids) {
-  const formData = new FormData();
-  ids.forEach((id) => formData.append(name, id));
+function reorderData(name, values) {
+  const data = new FormData();
+  values.forEach((value) => data.append(name, value));
+  return data;
+}
+
+async function prepareImage(formData, folder) {
+  const file = formData.get("image");
+  if (!file || typeof file === "string" || file.size === 0) return formData;
+  const { uploadMediaFile } = await import("@/lib/supabase/upload");
+  const result = await uploadMediaFile(file, { folder, accept: "image" });
+  formData.set("image_current", result.url);
+  formData.delete("image");
   return formData;
 }
 
-function useAdminSensors() {
+function useAdminAction() {
+  const router = useRouter();
+  const showToast = useAdminToast();
+  const [state, setState] = useState({ status: "saved", message: "Все сохранено" });
+
+  const run = useCallback(async (action, formData, options = {}) => {
+    setState({ status: "saving", message: options.pendingMessage || "Сохраняю…" });
+    try {
+      const result = await action(formData);
+      if (!result?.ok) {
+        setState({ status: "error", message: result?.message || "Не удалось сохранить" });
+        showToast(result?.message || "Не удалось сохранить", "error");
+        options.onError?.(result);
+        return result;
+      }
+      setState({ status: "saved", message: result.message || "Все сохранено" });
+      showToast(result.message || "Сохранено");
+      options.onSuccess?.(result.data);
+      router.refresh();
+      return result;
+    } catch (error) {
+      const message = error?.message || "Не удалось сохранить";
+      setState({ status: "error", message });
+      showToast(message, "error");
+      options.onError?.({ ok: false, message });
+      return { ok: false, message };
+    }
+  }, [router, showToast]);
+
+  return { run, state };
+}
+
+function SectionHeader({ activeSection, state, action }) {
+  const copy = sectionCopy[activeSection];
+  return (
+    <header className={styles.pageHeader}>
+      <div>
+        <h1>{copy.title}</h1>
+        <p>{copy.description}</p>
+      </div>
+      <div className={styles.headerActions}>
+        <span className={`${styles.saveState} ${styles[`state_${state.status}`]}`}><i />{state.message}</span>
+        {action}
+      </div>
+    </header>
+  );
+}
+
+export default function AdminDashboard(props) {
+  return (
+    <AdminToastProvider initialToast={props.initialToast}>
+      <DashboardContent {...props} />
+    </AdminToastProvider>
+  );
+}
+
+function DashboardContent({ activeSection, content, ...actions }) {
+  const actionState = useAdminAction();
+  const headerAction = activeSection === "projects" ? <Link className={styles.primaryButton} href="/admin/projects/new">+ Новый кейс</Link> : null;
+  return (
+    <div className={styles.sectionPage}>
+      <SectionHeader activeSection={activeSection} state={actionState.state} action={headerAction} />
+      {activeSection === "projects" ? <ProjectsSection projects={content.projects} reorderProjects={actions.reorderProjects} actionState={actionState} /> : null}
+      {activeSection === "photos" ? <PhotosSection initialItems={content.slides} actions={actions} actionState={actionState} /> : null}
+      {activeSection === "archive" ? <ArchiveSection initialItems={content.designArchive} actions={actions} actionState={actionState} /> : null}
+      {activeSection === "social" ? <SocialSection initialItems={content.socialLinks} actions={actions} actionState={actionState} /> : null}
+    </div>
+  );
+}
+
+function useSensorsConfig() {
   return useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 }
 
-function useToastAction() {
-  const showToast = useAdminToast();
+function ProjectsSection({ projects, reorderProjects, actionState }) {
+  const [items, setItems] = useState(projects);
+  const sensors = useSensorsConfig();
+  const ids = useMemo(() => items.map((item) => item.slug), [items]);
 
-  return useCallback(
-    async (action, formData, successMessage) => {
-      try {
-        await action(formData);
-        showToast(successMessage);
-        return true;
-      } catch (error) {
-        showToast(error?.message || "Не удалось сохранить изменения", "error");
-        return false;
-      }
-    },
-    [showToast]
-  );
-}
-
-function PreviewImage({ src, alt, className }) {
-  if (!src) return <div className={`${styles.previewFallback} ${className || ""}`}>Нет фото</div>;
-  return <img className={className} src={src} alt={alt || ""} loading="lazy" />;
-}
-
-export default function AdminDashboard({
-  content,
-  initialToast,
-  saveAboutSlide,
-  deleteAboutSlide,
-  reorderAboutSlides,
-  reorderProjects,
-  saveArchiveItem,
-  deleteArchiveItem,
-  reorderArchiveItems,
-  saveSocialLink,
-  deleteSocialLink
-}) {
-  return (
-    <AdminToastProvider initialToast={initialToast}>
-      <div className={styles.workspace}>
-        <nav className={styles.navRail} aria-label="Разделы админки">
-          <a href="#about">Фото</a>
-          <a href="#projects">Кейсы</a>
-          <a href="#archive">Архив</a>
-          <a href="#social">Соцсети</a>
-        </nav>
-        <div className={styles.sections}>
-          <AboutSection
-            slides={content.slides}
-            saveAboutSlide={saveAboutSlide}
-            deleteAboutSlide={deleteAboutSlide}
-            reorderAboutSlides={reorderAboutSlides}
-          />
-          <ProjectsSection projects={content.projects} reorderProjects={reorderProjects} />
-          <ArchiveSection
-            items={content.designArchive}
-            saveArchiveItem={saveArchiveItem}
-            deleteArchiveItem={deleteArchiveItem}
-            reorderArchiveItems={reorderArchiveItems}
-          />
-          <SocialSection links={content.socialLinks} saveSocialLink={saveSocialLink} deleteSocialLink={deleteSocialLink} />
-        </div>
-      </div>
-    </AdminToastProvider>
-  );
-}
-
-function AboutSection({ slides, saveAboutSlide, deleteAboutSlide, reorderAboutSlides }) {
-  const [items, setItems] = useState(slides);
-  const [isPending, startTransition] = useTransition();
-  const runAction = useToastAction();
-  const sensors = useAdminSensors();
-  const ids = useMemo(() => items.map((item) => item.id), [items]);
-
-  function handleDragEnd(event) {
-    const { active, over } = event;
+  async function onDragEnd({ active, over }) {
     if (!over || active.id === over.id) return;
-
-    setItems((current) => {
-      const next = arrayMove(
-        current,
-        current.findIndex((item) => item.id === active.id),
-        current.findIndex((item) => item.id === over.id)
-      );
-      startTransition(() =>
-        runAction(reorderAboutSlides, reorderFormData("ids", next.map((item) => item.id)), "Порядок фотографий обновлён")
-      );
-      return next;
-    });
+    const previous = items;
+    const next = arrayMove(items, items.findIndex((item) => item.slug === active.id), items.findIndex((item) => item.slug === over.id));
+    setItems(next);
+    await actionState.run(reorderProjects, reorderData("slugs", next.map((item) => item.slug)), { onError: () => setItems(previous) });
   }
 
   return (
-    <section id="about" className={styles.panel}>
-      <div className={styles.sectionHead}>
-        <div>
-          <p className={styles.kicker}>About photos</p>
-          <h2>Обо мне</h2>
-        </div>
-        <p>{isPending ? "Сохраняю порядок..." : "Загрузка, удаление и порядок фото."}</p>
-      </div>
+    <section className={styles.openSection}>
+      <div className={styles.listHeader}><span>Кейс</span><span>Год</span><span>Видимость</span><span /></div>
+      {items.length ? (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+          <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+            <div className={styles.caseList}>
+              {items.map((project) => (
+                <Sortable key={project.slug} id={project.slug} className={styles.caseRow}>
+                  <Link className={styles.caseIdentity} href={`/admin/projects/${project.slug}`}>
+                    <Preview src={project.image_url} alt={project.title} className={styles.caseThumb} />
+                    <strong>{project.title}</strong>
+                  </Link>
+                  <span>{project.year || "—"}</span>
+                  <span className={styles.visibility}><i className={project.is_visible ? styles.visibleDot : ""} />{project.is_visible ? "Опубликован" : "Скрыт"}</span>
+                  <Link className={styles.moreLink} href={`/admin/projects/${project.slug}`} aria-label={`Редактировать ${project.title}`}>•••</Link>
+                </Sortable>
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+      ) : <div className={styles.emptyState}><p>Пока нет кейсов</p><Link href="/admin/projects/new">Создать первый кейс</Link></div>}
+    </section>
+  );
+}
 
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+function PhotosSection({ initialItems, actions, actionState }) {
+  const [items, setItems] = useState(initialItems);
+  const sensors = useSensorsConfig();
+  const ids = useMemo(() => items.map((item) => item.id), [items]);
+
+  async function onDragEnd({ active, over }) {
+    if (!over || active.id === over.id) return;
+    const previous = items;
+    const next = arrayMove(items, items.findIndex((item) => item.id === active.id), items.findIndex((item) => item.id === over.id));
+    setItems(next);
+    await actionState.run(actions.reorderAboutSlides, reorderData("ids", next.map((item) => item.id)), { onError: () => setItems(previous) });
+  }
+
+  async function savePhoto(formData) {
+    const prepared = await prepareImage(formData, "about");
+    return actionState.run(actions.saveAboutSlide, prepared, { onSuccess: (data) => setItems((current) => {
+      const exists = current.some((item) => item.id === data.id);
+      return exists ? current.map((item) => item.id === data.id ? data : item) : [...current, data];
+    }) });
+  }
+
+  return (
+    <section className={styles.openSection}>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-          <div className={styles.list}>
-            {items.map((slide, index) => (
-              <SortableRow key={slide.id} id={slide.id}>
-                <PreviewImage className={styles.rowImage} src={slide.image_url} alt={slide.alt} />
-                <form action={(formData) => runAction(saveAboutSlide, formData, "Фотография обновлена")} className={styles.rowForm}>
-                  <input name="id" type="hidden" defaultValue={slide.id} />
-                  <input name="position" type="hidden" value={index} readOnly />
-                  <input name="alt" type="hidden" defaultValue={slide.alt || "Фото обо мне"} />
-                  <input name="image_current" type="hidden" defaultValue={slide.image_url} />
-                  <label className={styles.fileControl}>
-                    Заменить
-                    <input name="image" type="file" accept="image/*" />
-                  </label>
-                  <label className={styles.checkbox}>
-                    <input name="is_visible" type="checkbox" defaultChecked={slide.is_visible} />
-                    На сайте
-                  </label>
-                  <button type="submit">Сохранить</button>
-                  <button
-                    formAction={(formData) => runAction(deleteAboutSlide, formData, "Фотография удалена")}
-                    className={styles.danger}
-                    type="submit"
-                  >
-                    Удалить
-                  </button>
-                </form>
-              </SortableRow>
-            ))}
-          </div>
+          <div className={styles.photoList}>{items.map((photo, index) => (
+            <Sortable key={photo.id} id={photo.id} className={styles.photoRow}>
+              <Preview src={photo.image_url} alt={photo.alt} className={styles.photoThumb} />
+              <form action={savePhoto} className={styles.inlineRowForm}>
+                <input name="id" type="hidden" value={photo.id} readOnly /><input name="position" type="hidden" value={index} readOnly />
+                <input name="alt" type="hidden" value={photo.alt || "Фото обо мне"} readOnly /><input name="image_current" type="hidden" value={photo.image_url} readOnly />
+                <label className={styles.fileButton}>Заменить<input name="image" type="file" accept="image/*" /></label>
+                <label className={styles.switchLabel}><input name="is_visible" type="checkbox" defaultChecked={photo.is_visible} /><span />На сайте</label>
+                <SubmitButton>Сохранить</SubmitButton>
+                <SubmitButton className={styles.textDanger} formAction={(data) => actionState.run(actions.deleteAboutSlide, data, { onSuccess: () => setItems((current) => current.filter((item) => item.id !== photo.id)) })}>Удалить</SubmitButton>
+              </form>
+            </Sortable>
+          ))}</div>
         </SortableContext>
       </DndContext>
-
-      <form action={(formData) => runAction(saveAboutSlide, formData, "Фотография добавлена")} className={styles.inlineCreate}>
-        <input name="position" type="hidden" value={items.length} readOnly />
-        <input name="alt" type="hidden" value="Фото обо мне" readOnly />
-        <input name="is_visible" type="hidden" value="on" readOnly />
-        <label className={styles.fileControl}>
-          Новое фото
-          <input name="image" type="file" accept="image/*" required />
-        </label>
-        <button type="submit">Загрузить</button>
+      <form action={savePhoto} className={styles.createRow}>
+        <input name="position" type="hidden" value={items.length} readOnly /><input name="alt" type="hidden" value="Фото обо мне" readOnly /><input name="is_visible" type="hidden" value="on" readOnly />
+        <label className={styles.fileDrop}>+ Добавить фотографию<input name="image" type="file" accept="image/*" required /></label>
+        <SubmitButton>Загрузить</SubmitButton>
       </form>
     </section>
   );
 }
 
-function ProjectsSection({ projects, reorderProjects }) {
-  const [items, setItems] = useState(projects);
-  const [isPending, startTransition] = useTransition();
-  const runAction = useToastAction();
-  const sensors = useAdminSensors();
-  const ids = useMemo(() => items.map((item) => item.slug), [items]);
-
-  function handleDragEnd(event) {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    setItems((current) => {
-      const next = arrayMove(
-        current,
-        current.findIndex((item) => item.slug === active.id),
-        current.findIndex((item) => item.slug === over.id)
-      );
-      startTransition(() =>
-        runAction(reorderProjects, reorderFormData("slugs", next.map((item) => item.slug)), "Порядок кейсов обновлён")
-      );
-      return next;
-    });
-  }
-
-  return (
-    <section id="projects" className={styles.panel}>
-      <div className={styles.sectionHead}>
-        <div>
-          <p className={styles.kicker}>Cases</p>
-          <h2>Кейсы</h2>
-        </div>
-        <Link className={styles.primaryLink} href="/admin/projects/new">
-          Новый кейс
-        </Link>
-      </div>
-      <p className={styles.statusLine}>{isPending ? "Сохраняю порядок..." : "Перетащи строки, чтобы поменять порядок на сайте."}</p>
-
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-          <div className={styles.list}>
-            {items.map((project) => (
-              <SortableRow key={project.slug} id={project.slug}>
-                <div className={styles.projectTitle}>
-                  <strong>{project.title}</strong>
-                  <span>{project.year || "Без года"} / {project.is_visible ? "на сайте" : "скрыт"}</span>
-                </div>
-                <Link className={styles.rowAction} href={`/admin/projects/${project.slug}`}>
-                  Редактировать
-                </Link>
-              </SortableRow>
-            ))}
-          </div>
-        </SortableContext>
-      </DndContext>
-    </section>
-  );
-}
-
-function ArchiveSection({ items: initialItems, saveArchiveItem, deleteArchiveItem, reorderArchiveItems }) {
+function ArchiveSection({ initialItems, actions, actionState }) {
   const [items, setItems] = useState(initialItems);
   const [editing, setEditing] = useState(null);
-  const [isPending, startTransition] = useTransition();
-  const runAction = useToastAction();
-  const sensors = useAdminSensors();
+  const sensors = useSensorsConfig();
   const ids = useMemo(() => items.map((item) => item.slug), [items]);
 
-  function handleDragEnd(event) {
-    const { active, over } = event;
+  async function onDragEnd({ active, over }) {
     if (!over || active.id === over.id) return;
-
-    setItems((current) => {
-      const next = arrayMove(
-        current,
-        current.findIndex((item) => item.slug === active.id),
-        current.findIndex((item) => item.slug === over.id)
-      );
-      startTransition(() =>
-        runAction(reorderArchiveItems, reorderFormData("slugs", next.map((item) => item.slug)), "Порядок работ обновлён")
-      );
-      return next;
-    });
+    const previous = items;
+    const next = arrayMove(items, items.findIndex((item) => item.slug === active.id), items.findIndex((item) => item.slug === over.id));
+    setItems(next);
+    await actionState.run(actions.reorderArchiveItems, reorderData("slugs", next.map((item) => item.slug)), { onError: () => setItems(previous) });
   }
 
   return (
-    <section id="archive" className={styles.panel}>
-      <div className={styles.sectionHead}>
-        <div>
-          <p className={styles.kicker}>Design archive</p>
-          <h2>Дизайн-архив</h2>
-        </div>
-        <button type="button" onClick={() => setEditing({ slug: "new", position: items.length, accent: "#77f7c8", is_visible: true })}>
-          Новая работа
-        </button>
-      </div>
-      <p className={styles.statusLine}>{isPending ? "Сохраняю порядок..." : "Клик по изображению открывает редактирование."}</p>
-
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    <section className={styles.openSection}>
+      <div className={styles.localAction}><button className={styles.primaryButton} type="button" onClick={() => setEditing({ slug: "new", position: items.length, accent: "#77f7c8", is_visible: true })}>+ Новая работа</button></div>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={ids} strategy={rectSortingStrategy}>
-          <div className={styles.archiveGrid}>
-            {items.map((item, index) => (
-              <SortableTile key={item.slug} id={item.slug}>
-                <button className={styles.archiveButton} type="button" onClick={() => setEditing({ ...item, position: index })}>
-                  <PreviewImage className={styles.archiveImage} src={item.image_url} alt={item.title} />
-                  <span>{item.title}</span>
-                </button>
-              </SortableTile>
-            ))}
-          </div>
+          <div className={styles.archiveGrid}>{items.map((item, position) => (
+            <Sortable key={item.slug} id={item.slug} className={styles.archiveItem}>
+              <button className={styles.archiveEdit} type="button" onClick={() => setEditing({ ...item, position })}>
+                <Preview src={item.image_url} alt={item.title} /><span>{item.title}</span><small>{item.is_visible ? "На сайте" : "Скрыт"}</small>
+              </button>
+            </Sortable>
+          ))}</div>
         </SortableContext>
       </DndContext>
-
-      {editing ? (
-        <ArchiveModal
-          item={editing}
-          saveArchiveItem={saveArchiveItem}
-          deleteArchiveItem={deleteArchiveItem}
-          onClose={() => setEditing(null)}
-        />
-      ) : null}
+      {editing ? <ArchiveDialog item={editing} actions={actions} actionState={actionState} onClose={() => setEditing(null)} onChange={(data, removed) => {
+        setItems((current) => removed ? current.filter((item) => item.slug !== removed) : current.some((item) => item.slug === data.slug) ? current.map((item) => item.slug === data.slug ? data : item) : [...current, data]);
+        setEditing(null);
+      }} /> : null}
     </section>
   );
 }
 
-function ArchiveModal({ item, saveArchiveItem, deleteArchiveItem, onClose }) {
+function ArchiveDialog({ item, actions, actionState, onClose, onChange }) {
   const isNew = item.slug === "new";
-  const runAction = useToastAction();
-
-  async function handleSave(formData) {
-    const saved = await runAction(saveArchiveItem, formData, isNew ? "Работа добавлена" : "Работа обновлена");
-    if (saved) onClose();
+  async function save(data) {
+    const prepared = await prepareImage(data, `archive/${isNew ? "draft" : item.slug}`);
+    return actionState.run(actions.saveArchiveItem, prepared, { onSuccess: (saved) => onChange(saved) });
   }
-
-  async function handleDelete(formData) {
-    const deleted = await runAction(deleteArchiveItem, formData, "Работа удалена");
-    if (deleted) onClose();
-  }
-
   return (
     <div className={styles.modalBackdrop} onMouseDown={onClose}>
-      <form action={handleSave} className={styles.modalPanel} onMouseDown={(event) => event.stopPropagation()}>
-        <div className={styles.modalHead}>
-          <div>
-            <p className={styles.kicker}>{isNew ? "New archive item" : item.slug}</p>
-            <h3>{isNew ? "Новая работа" : item.title}</h3>
-          </div>
-          <button type="button" onClick={onClose}>
-            Закрыть
-          </button>
-        </div>
-
-        <input name="original_slug" type="hidden" defaultValue={item.slug} />
-        <input name="position" type="hidden" defaultValue={item.position || 0} />
-        <input name="image_current" type="hidden" defaultValue={item.image_url || ""} />
-        <div className={styles.modalPreview}>
-          <PreviewImage src={item.image_url} alt={item.title} />
-        </div>
+      <form action={save} className={styles.modalPanel} onMouseDown={(event) => event.stopPropagation()}>
+        <header><h2>{isNew ? "Новая работа" : item.title}</h2><button type="button" onClick={onClose}>Закрыть</button></header>
+        <input name="original_slug" type="hidden" value={item.slug} readOnly /><input name="position" type="hidden" value={item.position || 0} readOnly /><input name="image_current" type="hidden" value={item.image_url || ""} readOnly />
+        <Preview src={item.image_url} alt={item.title} className={styles.modalImage} />
         <div className={styles.formGrid}>
-          <label>
-            Название
-            <input name="title" defaultValue={item.title || ""} required />
-          </label>
-          <label>
-            Slug
-            <input name="slug" defaultValue={isNew ? "" : item.slug} placeholder="auto-from-title" />
-          </label>
-          <label>
-            Accent
-            <input name="accent" defaultValue={item.accent || "#77f7c8"} />
-          </label>
-          <label className={styles.fileControl}>
-            Изображение
-            <input name="image" type="file" accept="image/*" required={isNew} />
-          </label>
+          <label>Название<input name="title" defaultValue={item.title || ""} required /></label>
+          <label>Slug<input name="slug" defaultValue={isNew ? "" : item.slug} /></label>
+          <label>Accent<input name="accent" defaultValue={item.accent || "#77f7c8"} /></label>
+          <label className={styles.fileButton}>Изображение<input name="image" type="file" accept="image/*" required={isNew} /></label>
         </div>
-        <label className={styles.checkbox}>
-          <input name="is_visible" type="checkbox" defaultChecked={item.is_visible !== false} />
-          Показывать на сайте
-        </label>
-
-        <div className={styles.actions}>
-          <button type="submit">Сохранить</button>
-          {!isNew ? (
-            <button formAction={handleDelete} className={styles.danger} type="submit">
-              Удалить
-            </button>
-          ) : null}
-        </div>
+        <label className={styles.switchLabel}><input name="is_visible" type="checkbox" defaultChecked={item.is_visible !== false} /><span />На сайте</label>
+        <footer><SubmitButton>{isNew ? "Добавить" : "Сохранить"}</SubmitButton>{!isNew ? <SubmitButton className={styles.textDanger} formAction={(data) => actionState.run(actions.deleteArchiveItem, data, { onSuccess: () => onChange(null, item.slug) })}>Удалить</SubmitButton> : null}</footer>
       </form>
     </div>
   );
 }
 
-function SocialSection({ links, saveSocialLink, deleteSocialLink }) {
-  const runAction = useToastAction();
-
+function SocialSection({ initialItems, actions, actionState }) {
+  const [items, setItems] = useState(initialItems);
+  function save(data) {
+    return actionState.run(actions.saveSocialLink, data, { onSuccess: (saved) => setItems((current) => current.some((item) => item.label === saved.label) ? current.map((item) => item.label === saved.label ? saved : item) : [...current, saved]) });
+  }
   return (
-    <section id="social" className={`${styles.panel} ${styles.secondaryPanel}`}>
-      <div className={styles.sectionHead}>
-        <div>
-          <p className={styles.kicker}>Footer links</p>
-          <h2>Соцсети</h2>
-        </div>
-      </div>
-      <div className={styles.socialList}>
-        {links.map((link, index) => (
-          <form
-            key={link.label}
-            action={(formData) => runAction(saveSocialLink, formData, "Ссылка обновлена")}
-            className={styles.socialRow}
-          >
-            <input name="position" type="hidden" defaultValue={index} />
-            <label>
-              Label
-              <input name="label" defaultValue={link.label} required />
-            </label>
-            <label>
-              URL
-              <input name="href" defaultValue={link.href} required />
-            </label>
-            <label className={styles.checkbox}>
-              <input name="is_visible" type="checkbox" defaultChecked={link.is_visible} />
-              На сайте
-            </label>
-            <button type="submit">Сохранить</button>
-            <button
-              formAction={(formData) => runAction(deleteSocialLink, formData, "Ссылка удалена")}
-              className={styles.danger}
-              type="submit"
-            >
-              Удалить
-            </button>
-          </form>
-        ))}
-        <form action={(formData) => runAction(saveSocialLink, formData, "Ссылка добавлена")} className={styles.socialRow}>
-          <input name="position" type="hidden" defaultValue={links.length} />
-          <label>
-            Label
-            <input name="label" required />
-          </label>
-          <label>
-            URL
-            <input name="href" required />
-          </label>
-          <label className={styles.checkbox}>
-            <input name="is_visible" type="checkbox" defaultChecked />
-            На сайте
-          </label>
-          <button type="submit">Добавить</button>
+    <section className={styles.openSection}>
+      <div className={styles.socialList}>{items.map((link, index) => (
+        <form key={link.label} action={save} className={styles.socialRow}>
+          <input name="position" type="hidden" value={index} readOnly />
+          <label>Название<input name="label" defaultValue={link.label} required /></label>
+          <label>URL<input name="href" type="url" defaultValue={link.href} required /></label>
+          <label className={styles.switchLabel}><input name="is_visible" type="checkbox" defaultChecked={link.is_visible} /><span />На сайте</label>
+          <SubmitButton>Сохранить</SubmitButton>
+          <SubmitButton className={styles.textDanger} formAction={(data) => actionState.run(actions.deleteSocialLink, data, { onSuccess: () => setItems((current) => current.filter((item) => item.label !== link.label)) })}>Удалить</SubmitButton>
         </form>
-      </div>
+      ))}</div>
+      <form action={save} className={`${styles.socialRow} ${styles.newSocial}`}>
+        <input name="position" type="hidden" value={items.length} readOnly />
+        <label>Новая ссылка<input name="label" placeholder="Instagram" required /></label>
+        <label>URL<input name="href" type="url" placeholder="https://" required /></label>
+        <input name="is_visible" type="hidden" value="on" /><SubmitButton>Добавить</SubmitButton>
+      </form>
     </section>
   );
 }

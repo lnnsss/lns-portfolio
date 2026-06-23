@@ -4,13 +4,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-function requiredString(formData, key) {
+function stringValue(formData, key) {
   return String(formData.get(key) || "").trim();
 }
 
 function optionalString(formData, key) {
-  const value = requiredString(formData, key);
-  return value || null;
+  return stringValue(formData, key) || null;
 }
 
 function numberValue(formData, key) {
@@ -23,10 +22,7 @@ function checkboxValue(formData, key) {
 }
 
 function splitList(value, separator = "\n") {
-  return String(value || "")
-    .split(separator)
-    .map((item) => item.trim())
-    .filter(Boolean);
+  return String(value || "").split(separator).map((item) => item.trim()).filter(Boolean);
 }
 
 function slugValue(value) {
@@ -38,268 +34,287 @@ function slugValue(value) {
     .replace(/^-|-$/g, "");
 }
 
-async function getClientOrRedirect() {
-  const supabase = await createSupabaseServerClient();
-  if (!supabase) redirect("/admin/login?error=env");
-  return supabase;
+function ok(message, data = null) {
+  return { ok: true, message, fieldErrors: {}, data };
+}
+
+function fail(message, fieldErrors = {}) {
+  return { ok: false, message, fieldErrors, data: null };
+}
+
+function reportActionError(scope, error) {
+  console.error(`[admin:${scope}]`, {
+    code: error?.code || "unknown",
+    message: error?.message || "Unknown error"
+  });
 }
 
 async function requireAdminClient() {
-  const supabase = await getClientOrRedirect();
-  const {
-    data: { user },
-    error: userError
-  } = await supabase.auth.getUser();
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) throw new Error("Supabase configuration is missing");
 
-  if (userError || !user) redirect("/admin/login?error=session");
+  const [userResult, accessResult] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.rpc("is_portfolio_admin")
+  ]);
+  const user = userResult.data.user;
 
-  const { data: hasAccess, error: accessError } = await supabase.rpc("is_portfolio_admin");
-  if (accessError || hasAccess !== true) redirect("/admin?error=access");
-
+  if (userResult.error || !user) throw new Error("Сессия истекла. Войди снова.");
+  if (accessResult.error || accessResult.data !== true) throw new Error("Нет прав на редактирование");
   return supabase;
 }
 
 async function uploadFileIfPresent(supabase, formData, fieldName, folder) {
   const file = formData.get(fieldName);
   if (!file || typeof file === "string" || file.size === 0) return optionalString(formData, `${fieldName}_current`);
-
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
   const path = `${folder}/${Date.now()}-${safeName}`;
   const { error } = await supabase.storage.from("portfolio-media").upload(path, file, {
     cacheControl: "31536000",
-    upsert: true
+    upsert: false
   });
-
-  if (error) throw new Error(error.message);
-
-  const { data } = supabase.storage.from("portfolio-media").getPublicUrl(path);
-  return data.publicUrl;
+  if (error) throw error;
+  return supabase.storage.from("portfolio-media").getPublicUrl(path).data.publicUrl;
 }
 
-async function uploadFiles(supabase, formData, fieldName, folder) {
-  const files = formData
-    .getAll(fieldName)
-    .filter((file) => file && typeof file !== "string" && file.size > 0);
-
-  const urls = [];
-
-  for (const file of files) {
-    const singleFileForm = new FormData();
-    singleFileForm.set(fieldName, file);
-    urls.push(await uploadFileIfPresent(supabase, singleFileForm, fieldName, folder));
-  }
-
-  return urls.filter(Boolean);
-}
-
-function refresh() {
+function refresh(slug) {
   revalidatePath("/");
   revalidatePath("/admin");
-}
-
-function refreshProject(slug) {
-  refresh();
   if (slug) revalidatePath(`/admin/projects/${slug}`);
 }
 
 export async function signIn(formData) {
-  const supabase = await getClientOrRedirect();
-  const email = requiredString(formData, "email");
-  const password = requiredString(formData, "password");
-
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) redirect("/admin/login?error=env");
+  const { error } = await supabase.auth.signInWithPassword({
+    email: stringValue(formData, "email"),
+    password: stringValue(formData, "password")
+  });
   if (error) redirect("/admin/login?error=login");
-
-  redirect("/admin");
+  redirect("/admin?section=projects");
 }
 
 export async function signOut() {
-  const supabase = await getClientOrRedirect();
-  await supabase.auth.signOut();
+  const supabase = await createSupabaseServerClient();
+  if (supabase) await supabase.auth.signOut();
   redirect("/admin/login");
 }
 
-export async function saveAbout(formData) {
-  const supabase = await requireAdminClient();
-  const rows = [
-    { key: "about_kicker", value: requiredString(formData, "about_kicker") },
-    { key: "about_title", value: requiredString(formData, "about_title") },
-    { key: "about_paragraphs", value: splitList(formData.get("about_paragraphs")) }
-  ];
-
-  const { error } = await supabase.from("site_settings").upsert(rows, { onConflict: "key" });
-  if (error) throw new Error(error.message);
-
-  refresh();
-}
-
 export async function saveAboutSlide(formData) {
-  const supabase = await requireAdminClient();
-  const id = optionalString(formData, "id");
-  const imageUrl = await uploadFileIfPresent(supabase, formData, "image", "about");
-  const payload = {
-    position: numberValue(formData, "position"),
-    alt: requiredString(formData, "alt"),
-    image_url: imageUrl,
-    is_visible: checkboxValue(formData, "is_visible")
-  };
-
-  const query = id ? supabase.from("about_slides").update(payload).eq("id", id) : supabase.from("about_slides").insert(payload);
-  const { error } = await query;
-  if (error) throw new Error(error.message);
-
-  refresh();
-}
-
-export async function reorderAboutSlides(formData) {
-  const supabase = await requireAdminClient();
-  const ids = formData.getAll("ids").map(String);
-  const updates = ids.map((id, position) => supabase.from("about_slides").update({ position }).eq("id", id));
-  const results = await Promise.all(updates);
-  const error = results.find((result) => result.error)?.error;
-  if (error) throw new Error(error.message);
-
-  refresh();
+  try {
+    const supabase = await requireAdminClient();
+    const id = optionalString(formData, "id");
+    const payload = {
+      position: numberValue(formData, "position"),
+      alt: stringValue(formData, "alt") || "Фото обо мне",
+      image_url: await uploadFileIfPresent(supabase, formData, "image", "about"),
+      is_visible: checkboxValue(formData, "is_visible")
+    };
+    if (!payload.image_url) return fail("Добавь изображение", { image: "Выбери изображение" });
+    const query = id
+      ? supabase.from("about_slides").update(payload).eq("id", id).select().single()
+      : supabase.from("about_slides").insert(payload).select().single();
+    const { data, error } = await query;
+    if (error) throw error;
+    refresh();
+    return ok(id ? "Фотография обновлена" : "Фотография добавлена", data);
+  } catch (error) {
+    reportActionError("save-about-slide", error);
+    return fail(error?.message || "Не удалось сохранить фотографию");
+  }
 }
 
 export async function deleteAboutSlide(formData) {
-  const supabase = await requireAdminClient();
-  const { error } = await supabase.from("about_slides").delete().eq("id", requiredString(formData, "id"));
-  if (error) throw new Error(error.message);
-
-  refresh();
+  try {
+    const supabase = await requireAdminClient();
+    const id = stringValue(formData, "id");
+    const { error } = await supabase.from("about_slides").delete().eq("id", id);
+    if (error) throw error;
+    refresh();
+    return ok("Фотография удалена", { id });
+  } catch (error) {
+    reportActionError("delete-about-slide", error);
+    return fail(error?.message || "Не удалось удалить фотографию");
+  }
 }
 
-export async function saveProject(formData) {
-  const supabase = await requireAdminClient();
-  const originalSlug = optionalString(formData, "original_slug");
-  const isNew = !originalSlug || originalSlug === "new";
-  const title = requiredString(formData, "title");
-  const slug = slugValue(requiredString(formData, "slug") || title);
-  const imageUrl = await uploadFileIfPresent(supabase, formData, "image", `projects/${slug}`);
-  const currentGallery = formData.getAll("gallery").map(String).filter(Boolean);
-  const uploadedGallery = await uploadFiles(supabase, formData, "gallery_files", `projects/${slug}/gallery`);
-  const payload = {
-    slug,
-    position: numberValue(formData, "position"),
-    title,
-    descriptor: requiredString(formData, "descriptor"),
-    year: requiredString(formData, "year"),
-    category: requiredString(formData, "category"),
-    role: requiredString(formData, "role"),
-    technologies: splitList(formData.get("technologies"), ","),
-    live_url: optionalString(formData, "live_url"),
-    accent: requiredString(formData, "accent") || "#77f7c8",
-    image_url: imageUrl,
-    gallery: [...currentGallery, ...uploadedGallery],
-    summary: requiredString(formData, "summary"),
-    is_visible: checkboxValue(formData, "is_visible")
-  };
-
-  const query =
-    originalSlug && originalSlug !== "new"
-      ? supabase.from("projects").update(payload).eq("slug", originalSlug)
-      : supabase.from("projects").upsert(payload, { onConflict: "slug" });
-
-  const { error } = await query;
-  if (error) throw new Error(error.message);
-
-  refreshProject(slug);
-  redirect(`/admin/projects/${slug}?notice=${isNew ? "project-created" : "project-updated"}`);
+async function reorderRows(table, field, values, scope) {
+  try {
+    const supabase = await requireAdminClient();
+    const results = await Promise.all(values.map((value, position) => supabase.from(table).update({ position }).eq(field, value)));
+    const error = results.find((result) => result.error)?.error;
+    if (error) throw error;
+    refresh();
+    return ok("Порядок сохранён", values);
+  } catch (error) {
+    reportActionError(scope, error);
+    return fail("Не удалось сохранить порядок");
+  }
 }
 
-export async function deleteProject(formData) {
-  const supabase = await requireAdminClient();
-  const slug = requiredString(formData, "original_slug") || requiredString(formData, "slug");
-  const { error } = await supabase.from("projects").delete().eq("slug", slug);
-  if (error) throw new Error(error.message);
-
-  refresh();
-  redirect("/admin?notice=project-deleted#projects");
-}
-
-export async function uploadProjectGalleryFiles(formData) {
-  const supabase = await requireAdminClient();
-  const slug = slugValue(optionalString(formData, "slug") || `draft-${Date.now()}`);
-  return uploadFiles(supabase, formData, "gallery_files", `projects/${slug}/gallery`);
+export async function reorderAboutSlides(formData) {
+  return reorderRows("about_slides", "id", formData.getAll("ids").map(String), "reorder-about");
 }
 
 export async function reorderProjects(formData) {
-  const supabase = await requireAdminClient();
-  const slugs = formData.getAll("slugs").map(String);
-  const updates = slugs.map((slug, position) => supabase.from("projects").update({ position }).eq("slug", slug));
-  const results = await Promise.all(updates);
-  const error = results.find((result) => result.error)?.error;
-  if (error) throw new Error(error.message);
-
-  refresh();
-}
-
-export async function saveArchiveItem(formData) {
-  const supabase = await requireAdminClient();
-  const originalSlug = optionalString(formData, "original_slug");
-  const title = requiredString(formData, "title");
-  const slug = slugValue(requiredString(formData, "slug") || title);
-  const imageUrl = await uploadFileIfPresent(supabase, formData, "image", `archive/${slug}`);
-  const payload = {
-    slug,
-    position: numberValue(formData, "position"),
-    title,
-    accent: requiredString(formData, "accent") || "#77f7c8",
-    image_url: imageUrl,
-    is_visible: checkboxValue(formData, "is_visible")
-  };
-
-  const query =
-    originalSlug && originalSlug !== "new"
-      ? supabase.from("design_archive_items").update(payload).eq("slug", originalSlug)
-      : supabase.from("design_archive_items").upsert(payload, { onConflict: "slug" });
-
-  const { error } = await query;
-  if (error) throw new Error(error.message);
-
-  refresh();
-}
-
-export async function deleteArchiveItem(formData) {
-  const supabase = await requireAdminClient();
-  const { error } = await supabase.from("design_archive_items").delete().eq("slug", requiredString(formData, "slug"));
-  if (error) throw new Error(error.message);
-
-  refresh();
+  return reorderRows("projects", "slug", formData.getAll("slugs").map(String), "reorder-projects");
 }
 
 export async function reorderArchiveItems(formData) {
-  const supabase = await requireAdminClient();
-  const slugs = formData.getAll("slugs").map(String);
-  const updates = slugs.map((slug, position) => supabase.from("design_archive_items").update({ position }).eq("slug", slug));
-  const results = await Promise.all(updates);
-  const error = results.find((result) => result.error)?.error;
-  if (error) throw new Error(error.message);
+  return reorderRows("design_archive_items", "slug", formData.getAll("slugs").map(String), "reorder-archive");
+}
 
-  refresh();
+function validateProject(formData, isNew) {
+  const required = {
+    title: "Добавь название",
+    year: "Укажи год",
+    category: "Укажи категорию",
+    descriptor: "Добавь короткое описание",
+    role: "Опиши роль",
+    technologies: "Укажи инструменты",
+    summary: "Добавь полное описание"
+  };
+  const fieldErrors = Object.fromEntries(Object.entries(required).filter(([key]) => !stringValue(formData, key)));
+  const imageUrl = optionalString(formData, "image_current");
+  if (isNew && !imageUrl) fieldErrors.image = "Добавь обложку";
+  const slug = slugValue(stringValue(formData, "slug") || stringValue(formData, "title"));
+  if (!slug) fieldErrors.slug = "Не удалось сформировать адрес";
+  return { fieldErrors, slug, imageUrl };
+}
+
+export async function saveProject(formData) {
+  const originalSlug = optionalString(formData, "original_slug");
+  const isNew = !originalSlug || originalSlug === "new";
+  const { fieldErrors, slug, imageUrl } = validateProject(formData, isNew);
+  if (Object.keys(fieldErrors).length) return fail("Проверь обязательные поля", fieldErrors);
+
+  try {
+    const supabase = await requireAdminClient();
+    if (isNew || slug !== originalSlug) {
+      const { data: duplicate, error: duplicateError } = await supabase.from("projects").select("slug").eq("slug", slug).maybeSingle();
+      if (duplicateError) throw duplicateError;
+      if (duplicate) return fail("Такой адрес уже занят", { slug: "Выбери другой slug" });
+    }
+
+    const payload = {
+      slug,
+      position: numberValue(formData, "position"),
+      title: stringValue(formData, "title"),
+      descriptor: stringValue(formData, "descriptor"),
+      year: stringValue(formData, "year"),
+      category: stringValue(formData, "category"),
+      role: stringValue(formData, "role"),
+      technologies: splitList(formData.get("technologies"), ","),
+      live_url: optionalString(formData, "live_url"),
+      accent: stringValue(formData, "accent") || "#77f7c8",
+      image_url: imageUrl,
+      gallery: formData.getAll("gallery").map(String).filter(Boolean),
+      summary: stringValue(formData, "summary"),
+      is_visible: checkboxValue(formData, "is_visible")
+    };
+    const query = isNew
+      ? supabase.from("projects").insert(payload).select().single()
+      : supabase.from("projects").update(payload).eq("slug", originalSlug).select().single();
+    const { data, error } = await query;
+    if (error) {
+      if (error.code === "23505") return fail("Такой адрес уже занят", { slug: "Выбери другой slug" });
+      throw error;
+    }
+    refresh(slug);
+    return ok(isNew ? "Кейс создан" : "Изменения сохранены", { project: data, isNew });
+  } catch (error) {
+    reportActionError("save-project", error);
+    return fail(error?.message || "Не удалось сохранить кейс");
+  }
+}
+
+export async function deleteProject(formData) {
+  try {
+    const supabase = await requireAdminClient();
+    const slug = stringValue(formData, "original_slug") || stringValue(formData, "slug");
+    const { error } = await supabase.from("projects").delete().eq("slug", slug);
+    if (error) throw error;
+    refresh();
+    return ok("Кейс удалён", { slug });
+  } catch (error) {
+    reportActionError("delete-project", error);
+    return fail(error?.message || "Не удалось удалить кейс");
+  }
+}
+
+export async function saveArchiveItem(formData) {
+  try {
+    const supabase = await requireAdminClient();
+    const originalSlug = optionalString(formData, "original_slug");
+    const title = stringValue(formData, "title");
+    const slug = slugValue(stringValue(formData, "slug") || title);
+    if (!title || !slug) return fail("Заполни название", { title: "Обязательное поле" });
+    const payload = {
+      slug,
+      position: numberValue(formData, "position"),
+      title,
+      accent: stringValue(formData, "accent") || "#77f7c8",
+      image_url: await uploadFileIfPresent(supabase, formData, "image", `archive/${slug}`),
+      is_visible: checkboxValue(formData, "is_visible")
+    };
+    if (!payload.image_url) return fail("Добавь изображение", { image: "Выбери изображение" });
+    const query = originalSlug && originalSlug !== "new"
+      ? supabase.from("design_archive_items").update(payload).eq("slug", originalSlug).select().single()
+      : supabase.from("design_archive_items").insert(payload).select().single();
+    const { data, error } = await query;
+    if (error) throw error;
+    refresh();
+    return ok(originalSlug === "new" ? "Работа добавлена" : "Работа обновлена", data);
+  } catch (error) {
+    reportActionError("save-archive", error);
+    return fail(error?.message || "Не удалось сохранить работу");
+  }
+}
+
+export async function deleteArchiveItem(formData) {
+  try {
+    const supabase = await requireAdminClient();
+    const slug = stringValue(formData, "slug");
+    const { error } = await supabase.from("design_archive_items").delete().eq("slug", slug);
+    if (error) throw error;
+    refresh();
+    return ok("Работа удалена", { slug });
+  } catch (error) {
+    reportActionError("delete-archive", error);
+    return fail(error?.message || "Не удалось удалить работу");
+  }
 }
 
 export async function saveSocialLink(formData) {
-  const supabase = await requireAdminClient();
-  const label = requiredString(formData, "label");
-  const payload = {
-    label,
-    href: requiredString(formData, "href"),
-    position: numberValue(formData, "position"),
-    is_visible: checkboxValue(formData, "is_visible")
-  };
-
-  const { error } = await supabase.from("social_links").upsert(payload, { onConflict: "label" });
-  if (error) throw new Error(error.message);
-
-  refresh();
+  try {
+    const supabase = await requireAdminClient();
+    const label = stringValue(formData, "label");
+    const href = stringValue(formData, "href");
+    const fieldErrors = {};
+    if (!label) fieldErrors.label = "Добавь название";
+    try { new URL(href); } catch { fieldErrors.href = "Укажи полный URL"; }
+    if (Object.keys(fieldErrors).length) return fail("Проверь ссылку", fieldErrors);
+    const payload = { label, href, position: numberValue(formData, "position"), is_visible: checkboxValue(formData, "is_visible") };
+    const { data, error } = await supabase.from("social_links").upsert(payload, { onConflict: "label" }).select().single();
+    if (error) throw error;
+    refresh();
+    return ok("Ссылка сохранена", data);
+  } catch (error) {
+    reportActionError("save-social", error);
+    return fail(error?.message || "Не удалось сохранить ссылку");
+  }
 }
 
 export async function deleteSocialLink(formData) {
-  const supabase = await requireAdminClient();
-  const { error } = await supabase.from("social_links").delete().eq("label", requiredString(formData, "label"));
-  if (error) throw new Error(error.message);
-
-  refresh();
+  try {
+    const supabase = await requireAdminClient();
+    const label = stringValue(formData, "label");
+    const { error } = await supabase.from("social_links").delete().eq("label", label);
+    if (error) throw error;
+    refresh();
+    return ok("Ссылка удалена", { label });
+  } catch (error) {
+    reportActionError("delete-social", error);
+    return fail(error?.message || "Не удалось удалить ссылку");
+  }
 }
