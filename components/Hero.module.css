@@ -236,7 +236,8 @@
 
   .mobileAboutAnchor {
     position: absolute;
-    left: 50%;
+    left: 0;
+    right: 0;
     bottom: 18px;
     z-index: 3;
     display: grid;
@@ -248,7 +249,7 @@
     background: rgba(255, 255, 255, 0.06);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
-    transform: translateX(-50%);
+    margin-inline: auto;
   }
 
   .mobileAboutAnchor span {

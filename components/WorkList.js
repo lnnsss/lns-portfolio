@@ -9,11 +9,24 @@ import styles from "./WorkList.module.css";
 export default function WorkList({ projects }) {
   const [activeProject, setActiveProject] = useState(null);
   const [didDrag, setDidDrag] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const viewportRef = useRef(null);
   const carouselRef = useRef(null);
   const [maxOffset, setMaxOffset] = useState(0);
   const dragX = useMotionValue(0);
   const smoothX = useSpring(dragX, { stiffness: 180, damping: 28 });
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 620px)");
+    const updateMode = () => {
+      setIsMobile(media.matches);
+      if (media.matches) dragX.set(0);
+    };
+
+    updateMode();
+    media.addEventListener("change", updateMode);
+    return () => media.removeEventListener("change", updateMode);
+  }, [dragX]);
 
   useEffect(() => {
     function updateMaxOffset() {
@@ -65,8 +78,8 @@ export default function WorkList({ projects }) {
         <motion.div
           ref={carouselRef}
           className={styles.carousel}
-          style={{ x: smoothX }}
-          drag="x"
+          style={isMobile ? undefined : { x: smoothX }}
+          drag={isMobile ? false : "x"}
           dragConstraints={{ left: -maxOffset, right: 0 }}
           dragElastic={0.04}
           onDragStart={() => setDidDrag(true)}
