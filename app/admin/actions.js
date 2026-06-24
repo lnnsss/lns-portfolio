@@ -49,6 +49,36 @@ function reportActionError(scope, error) {
   });
 }
 
+const STORAGE_PUBLIC_MARKER = "/storage/v1/object/public/portfolio-media/";
+
+function storagePathFromUrl(url) {
+  const index = String(url || "").indexOf(STORAGE_PUBLIC_MARKER);
+  if (index === -1) return null;
+  return decodeURIComponent(String(url).slice(index + STORAGE_PUBLIC_MARKER.length));
+}
+
+async function promoteDraftMedia(supabase, url, slug, area) {
+  const sourcePath = storagePathFromUrl(url);
+  if (!sourcePath?.startsWith("drafts/projects/")) return { url, move: null };
+
+  const fileName = sourcePath.split("/").pop();
+  const targetPath = `projects/${slug}/${area}/${fileName}`;
+  const { error } = await supabase.storage.from("portfolio-media").move(sourcePath, targetPath);
+  if (error) throw error;
+  return {
+    url: supabase.storage.from("portfolio-media").getPublicUrl(targetPath).data.publicUrl,
+    move: { sourcePath, targetPath }
+  };
+}
+
+async function rollbackDraftMoves(supabase, moves) {
+  const bucket = supabase.storage.from("portfolio-media");
+  for (const move of [...moves].reverse()) {
+    const { error } = await bucket.move(move.targetPath, move.sourcePath);
+    if (error) reportActionError("rollback-draft-media", error);
+  }
+}
+
 async function requireAdminClient() {
   const supabase = await createSupabaseServerClient();
   if (!supabase) throw new Error("Supabase configuration is missing");
@@ -80,6 +110,10 @@ async function uploadFileIfPresent(supabase, formData, fieldName, folder) {
 function refresh(slug) {
   revalidatePath("/");
   revalidatePath("/admin");
+  revalidatePath("/admin/projects");
+  revalidatePath("/admin/photos");
+  revalidatePath("/admin/archive");
+  revalidatePath("/admin/social");
   if (slug) revalidatePath(`/admin/projects/${slug}`);
 }
 
@@ -91,7 +125,7 @@ export async function signIn(formData) {
     password: stringValue(formData, "password")
   });
   if (error) redirect("/admin/login?error=login");
-  redirect("/admin?section=projects");
+  redirect("/admin/projects");
 }
 
 export async function signOut() {
@@ -188,12 +222,30 @@ export async function saveProject(formData) {
   const { fieldErrors, slug, imageUrl } = validateProject(formData, isNew);
   if (Object.keys(fieldErrors).length) return fail("Проверь обязательные поля", fieldErrors);
 
+  let supabase;
+  let draftMoves = [];
   try {
-    const supabase = await requireAdminClient();
+    supabase = await requireAdminClient();
     if (isNew || slug !== originalSlug) {
       const { data: duplicate, error: duplicateError } = await supabase.from("projects").select("slug").eq("slug", slug).maybeSingle();
       if (duplicateError) throw duplicateError;
       if (duplicate) return fail("Такой адрес уже занят", { slug: "Выбери другой slug" });
+    }
+
+    const gallery = formData.getAll("gallery").map(String).filter(Boolean);
+    let finalImageUrl = imageUrl;
+    let finalGallery = gallery;
+    if (isNew) {
+      const promotedCover = await promoteDraftMedia(supabase, imageUrl, slug, "cover");
+      finalImageUrl = promotedCover.url;
+      if (promotedCover.move) draftMoves.push(promotedCover.move);
+
+      finalGallery = [];
+      for (const url of gallery) {
+        const promoted = await promoteDraftMedia(supabase, url, slug, "gallery");
+        finalGallery.push(promoted.url);
+        if (promoted.move) draftMoves.push(promoted.move);
+      }
     }
 
     const payload = {
@@ -207,8 +259,8 @@ export async function saveProject(formData) {
       technologies: splitList(formData.get("technologies"), ","),
       live_url: optionalString(formData, "live_url"),
       accent: stringValue(formData, "accent") || "#77f7c8",
-      image_url: imageUrl,
-      gallery: formData.getAll("gallery").map(String).filter(Boolean),
+      image_url: finalImageUrl,
+      gallery: finalGallery,
       summary: stringValue(formData, "summary"),
       is_visible: checkboxValue(formData, "is_visible")
     };
@@ -217,12 +269,15 @@ export async function saveProject(formData) {
       : supabase.from("projects").update(payload).eq("slug", originalSlug).select().single();
     const { data, error } = await query;
     if (error) {
+      if (draftMoves.length) await rollbackDraftMoves(supabase, draftMoves);
+      draftMoves = [];
       if (error.code === "23505") return fail("Такой адрес уже занят", { slug: "Выбери другой slug" });
       throw error;
     }
     refresh(slug);
     return ok(isNew ? "Кейс создан" : "Изменения сохранены", { project: data, isNew });
   } catch (error) {
+    if (supabase && draftMoves.length) await rollbackDraftMoves(supabase, draftMoves);
     reportActionError("save-project", error);
     return fail(error?.message || "Не удалось сохранить кейс");
   }

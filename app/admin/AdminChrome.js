@@ -2,10 +2,10 @@ import Link from "next/link";
 import styles from "./admin.module.css";
 
 const navItems = [
-  { id: "projects", label: "Кейсы", href: "/admin?section=projects" },
-  { id: "photos", label: "Фото", href: "/admin?section=photos" },
-  { id: "archive", label: "Архив", href: "/admin?section=archive" },
-  { id: "social", label: "Соцсети", href: "/admin?section=social" }
+  { id: "projects", label: "Кейсы", href: "/admin/projects" },
+  { id: "photos", label: "Фото", href: "/admin/photos" },
+  { id: "archive", label: "Архив", href: "/admin/archive" },
+  { id: "social", label: "Соцсети", href: "/admin/social" }
 ];
 
 export function ArrowIcon({ direction = "left" }) {
@@ -20,7 +20,7 @@ export default function AdminChrome({ activeSection = "projects", email, signOut
   return (
     <div className={styles.adminApp}>
       <aside className={styles.sidebar}>
-        <Link className={styles.adminLogo} href="/admin?section=projects">LNS</Link>
+        <Link className={styles.adminLogo} href="/admin/projects">LNS</Link>
         <nav className={styles.sidebarNav} aria-label="Разделы админки">
           {navItems.map((item) => (
             <Link key={item.id} className={activeSection === item.id ? styles.navActive : ""} href={item.href}>

@@ -110,6 +110,7 @@ function Editor({ project, isNew }) {
     }
     setCoverState({ status: "uploading", progress: 0, error: "" });
     try {
+      const previousCover = cover;
       const uploaded = await uploadMediaFile(file, {
         folder: `${isNew ? draftFolder : `projects/${project.slug}`}/cover`,
         accept: "image",
@@ -119,6 +120,7 @@ function Editor({ project, isNew }) {
       setCoverState({ status: "complete", progress: 100, error: "" });
       setErrors((current) => ({ ...current, image: undefined }));
       markDirty();
+      if (previousCover.includes("/drafts/")) await removeMediaByUrl(previousCover);
     } catch (error) {
       setCoverState({ status: "error", progress: 0, error: error?.message || "Ошибка загрузки" });
     }
@@ -250,11 +252,21 @@ function Editor({ project, isNew }) {
       showToast(result?.message || "Не удалось удалить", "error");
       return;
     }
-    router.push("/admin?section=projects&notice=project-deleted");
+    router.push("/admin/projects?notice=project-deleted");
   }
 
-  function backClick(event) {
-    if ((saveState === "dirty" || saveState === "error") && !window.confirm("Изменения не сохранены. Уйти со страницы?")) event.preventDefault();
+  async function cleanupDraftMedia() {
+    const draftUrls = [...new Set([cover, ...gallery].filter((url) => url.includes("/drafts/")))];
+    await Promise.allSettled(draftUrls.map(removeMediaByUrl));
+  }
+
+  async function backClick(event) {
+    const hasUnsavedChanges = saveState === "dirty" || saveState === "error";
+    if (!hasUnsavedChanges) return;
+    event.preventDefault();
+    if (!window.confirm("Изменения не сохранены. Уйти со страницы?")) return;
+    if (isNew) await cleanupDraftMedia();
+    router.push("/admin/projects");
   }
 
   const stateLabel = saveState === "saving" ? message : saveState === "error" ? message : saveState === "dirty" ? "Не сохранено" : "Все сохранено";
@@ -262,7 +274,7 @@ function Editor({ project, isNew }) {
   return (
     <div className={styles.editorPage}>
       <header className={styles.editorTopbar}>
-        <Link className={styles.backLink} href="/admin?section=projects" onClick={backClick}><ArrowIcon />Назад</Link>
+        <Link className={styles.backLink} href="/admin/projects" onClick={backClick}><ArrowIcon />Назад</Link>
         <div className={styles.editorTitle}><h1>{isNew ? "Новый кейс" : title || project.title}</h1><span className={`${styles.saveState} ${styles[`state_${saveState}`]}`}><i />{stateLabel}</span></div>
         <button className={styles.primaryButton} type="submit" form="project-editor" disabled={saveState === "saving" || uploadBusy}>{saveState === "saving" ? "Сохраняю…" : isNew ? "Создать кейс" : "Сохранить"}</button>
       </header>
