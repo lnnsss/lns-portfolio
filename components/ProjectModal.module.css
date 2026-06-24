@@ -248,8 +248,8 @@ button.galleryItem {
   }
 
   .heroImage {
-    width: calc(100% + var(--gutter) + var(--gutter));
-    margin-inline: calc(var(--gutter) * -1);
+    width: 100%;
+    margin-inline: 0;
     aspect-ratio: auto;
     overflow: visible;
   }
@@ -275,18 +275,18 @@ button.galleryItem {
   .gallery {
     grid-template-columns: 1fr;
     gap: 12px;
-    width: calc(100% + var(--gutter) + var(--gutter));
-    margin-inline: calc(var(--gutter) * -1);
+    width: 100%;
+    margin-inline: 0;
   }
 
   .galleryItem {
-    aspect-ratio: auto;
-    overflow: visible;
+    aspect-ratio: 1;
+    overflow: hidden;
   }
 
   .galleryItem img {
-    height: auto;
-    object-fit: contain;
+    height: 100%;
+    object-fit: cover;
   }
 
   .galleryVideo {
