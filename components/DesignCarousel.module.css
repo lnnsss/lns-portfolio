@@ -38,7 +38,7 @@
 .frame {
   position: relative;
   width: clamp(250px, 32vw, 520px);
-  aspect-ratio: 1.24;
+  aspect-ratio: 1;
   flex: 0 0 auto;
   margin: 0;
   padding: 0;

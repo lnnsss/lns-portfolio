@@ -64,10 +64,11 @@
 
 .heroImage {
   display: block;
+  align-self: start;
   width: 100%;
   padding: 0;
   border: 0;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 1;
   overflow: hidden;
   background: #151515;
   cursor: zoom-in;
@@ -147,7 +148,7 @@
   margin: 0;
   padding: 0;
   border: 0;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 1;
   overflow: hidden;
   background: #151515;
   content-visibility: auto;
@@ -247,8 +248,15 @@ button.galleryItem {
   }
 
   .heroImage {
-    width: min(100%, 520px);
-    aspect-ratio: 4 / 5;
+    width: calc(100% + var(--gutter) + var(--gutter));
+    margin-inline: calc(var(--gutter) * -1);
+    aspect-ratio: auto;
+    overflow: visible;
+  }
+
+  .heroImage img {
+    height: auto;
+    object-fit: contain;
   }
 
   .caseCopy {
@@ -267,10 +275,18 @@ button.galleryItem {
   .gallery {
     grid-template-columns: 1fr;
     gap: 12px;
+    width: calc(100% + var(--gutter) + var(--gutter));
+    margin-inline: calc(var(--gutter) * -1);
   }
 
   .galleryItem {
-    aspect-ratio: 4 / 3;
+    aspect-ratio: auto;
+    overflow: visible;
+  }
+
+  .galleryItem img {
+    height: auto;
+    object-fit: contain;
   }
 
   .galleryVideo {
