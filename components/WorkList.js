@@ -9,7 +9,6 @@ import styles from "./WorkList.module.css";
 export default function WorkList({ projects }) {
   const [activeProject, setActiveProject] = useState(null);
   const [activeIndex, setActiveIndex] = useState(null);
-  const [didDrag, setDidDrag] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const viewportRef = useRef(null);
@@ -88,11 +87,6 @@ export default function WorkList({ projects }) {
           ref={carouselRef}
           className={styles.carousel}
           style={isMobile ? undefined : { x: smoothX }}
-          drag={isMobile ? false : "x"}
-          dragConstraints={{ left: -maxOffset, right: 0 }}
-          dragElastic={0.04}
-          onDragStart={() => setDidDrag(true)}
-          onDragEnd={() => window.setTimeout(() => setDidDrag(false), 80)}
           onPointerLeave={() => setActiveIndex(null)}
           onMouseLeave={() => setActiveIndex(null)}
         >
@@ -110,9 +104,7 @@ export default function WorkList({ projects }) {
               onMouseEnter={() => setActiveIndex(index)}
               onFocus={() => setActiveIndex(index)}
               onBlur={() => setActiveIndex(null)}
-              onClick={() => {
-                if (!didDrag) setActiveProject(project);
-              }}
+              onClick={() => setActiveProject(project)}
             >
               <span className={styles.card}>
                 <SmartImage src={project.image} alt={`${project.title} - обложка проекта`} width={760} height={950} />

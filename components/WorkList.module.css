@@ -28,11 +28,6 @@
   overflow-x: hidden;
   overflow-y: visible;
   padding: 88px 0 88px;
-  cursor: grab;
-}
-
-.viewport:active {
-  cursor: grabbing;
 }
 
 .carousel {
