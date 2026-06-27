@@ -57,7 +57,7 @@
   color: white;
   background: transparent;
   cursor: pointer;
-  transform: translateY(var(--lift)) translateZ(var(--depth)) rotateY(-24deg) rotateZ(-0.6deg);
+  transform: translateX(var(--hover-shift, 0px)) translateY(var(--lift)) translateZ(var(--depth)) rotateY(-24deg) rotateZ(-0.6deg);
   transform-style: preserve-3d;
   transition: transform 720ms cubic-bezier(0.16, 1, 0.3, 1), z-index 0ms linear;
 }
@@ -69,7 +69,13 @@
 .cardHit:hover,
 .cardHit:focus-visible {
   z-index: 999;
-  transform: translateY(calc(var(--lift) - 48px)) translateZ(var(--depth)) rotateY(-24deg) rotateZ(-0.6deg);
+}
+
+.cardHitActive,
+.cardHitActive:hover,
+.cardHitActive:focus-visible {
+  z-index: 999;
+  transform: translateX(var(--hover-shift, 0px)) translateY(calc(var(--lift) - 46px)) translateZ(130px) rotateY(0deg) rotateZ(0deg) scale(1.04);
 }
 
 .card {
@@ -125,7 +131,8 @@
 }
 
 .cardHit:hover img,
-.cardHit:focus-visible img {
+.cardHit:focus-visible img,
+.cardHitActive img {
   filter: saturate(1.14) contrast(1.04);
 }
 
@@ -134,9 +141,68 @@
 .cardHit:hover .cardMeta,
 .cardHit:focus-visible .cardShade,
 .cardHit:focus-visible .cardTitle,
-.cardHit:focus-visible .cardMeta {
+.cardHit:focus-visible .cardMeta,
+.cardHitActive .cardShade,
+.cardHitActive .cardTitle,
+.cardHitActive .cardMeta {
   opacity: 1;
   transform: translateY(0);
+}
+
+.scrubber {
+  padding: 0 var(--gutter);
+  margin-top: -34px;
+}
+
+.scrubber input {
+  display: block;
+  width: min(560px, 48vw);
+  height: 34px;
+  margin: 0 auto;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  cursor: grab;
+}
+
+.scrubber input:active {
+  cursor: grabbing;
+}
+
+.scrubber input:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+
+.scrubber input::-webkit-slider-runnable-track {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.scrubber input::-moz-range-track {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.scrubber input::-webkit-slider-thumb {
+  width: 18px;
+  height: 18px;
+  margin-top: -8.5px;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  border-radius: 50%;
+  background: #f7f3ea;
+  box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.08), 0 14px 34px rgba(0, 0, 0, 0.42);
+}
+
+.scrubber input::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  border-radius: 50%;
+  background: #f7f3ea;
+  box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.08), 0 14px 34px rgba(0, 0, 0, 0.42);
 }
 
 @media (max-width: 900px) {
@@ -146,12 +212,13 @@
 
   .cardHit {
     margin-left: -52px;
-    transform: translateY(var(--lift)) rotateY(-18deg) rotateZ(-1deg);
+    transform: translateX(var(--hover-shift, 0px)) translateY(var(--lift)) rotateY(-18deg) rotateZ(-1deg);
   }
 
-  .cardHit:hover,
-  .cardHit:focus-visible {
-    transform: translateY(calc(var(--lift) - 38px)) rotateY(-18deg) rotateZ(-1deg);
+  .cardHitActive,
+  .cardHitActive:hover,
+  .cardHitActive:focus-visible {
+    transform: translateX(var(--hover-shift, 0px)) translateY(calc(var(--lift) - 38px)) translateZ(92px) rotateY(0deg) rotateZ(0deg) scale(1.035);
   }
 
   .cardHit:first-child {
@@ -197,7 +264,10 @@
 
   .cardHit,
   .cardHit:hover,
-  .cardHit:focus-visible {
+  .cardHit:focus-visible,
+  .cardHitActive,
+  .cardHitActive:hover,
+  .cardHitActive:focus-visible {
     width: min(72vw, 310px);
     margin-left: 0;
     transform: translateY(0) rotate(0);
@@ -225,5 +295,15 @@
     left: 14px;
     right: 14px;
     bottom: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cardHit,
+  .card img,
+  .cardShade,
+  .cardTitle,
+  .cardMeta {
+    transition: none;
   }
 }

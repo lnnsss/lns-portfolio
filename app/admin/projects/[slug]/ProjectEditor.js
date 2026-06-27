@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
@@ -9,6 +8,7 @@ import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordi
 import { CSS } from "@dnd-kit/utilities";
 import { deleteProject, saveProject } from "../../actions";
 import { AdminToastProvider, useAdminToast } from "../../AdminToast";
+import SmartImage from "@/components/SmartImage";
 import { removeMediaByUrl, uploadMediaFile, validateMediaFile } from "@/lib/supabase/upload";
 import { ArrowIcon } from "../../AdminChrome";
 import styles from "../../admin.module.css";
@@ -38,7 +38,7 @@ function GalleryItem({ url, onRemove }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: url });
   return (
     <div ref={setNodeRef} className={`${styles.mediaTile} ${isDragging ? styles.dragging : ""}`} style={{ transform: CSS.Transform.toString(transform), transition }}>
-      {isVideoUrl(url) ? <video src={url} playsInline preload="metadata" /> : <Image src={url} alt="Медиа кейса" width={640} height={480} loading="lazy" unoptimized />}
+      {isVideoUrl(url) ? <video src={url} playsInline preload="metadata" /> : <SmartImage src={url} alt="Медиа кейса" width={640} height={480} />}
       <button className={styles.mediaDrag} type="button" aria-label="Изменить порядок" {...attributes} {...listeners}><DragIcon /></button>
       <button className={styles.mediaRemove} type="button" aria-label="Удалить медиа" onClick={() => onRemove(url)}>×</button>
     </div>
@@ -314,7 +314,7 @@ function Editor({ project, isNew }) {
 
           <aside className={styles.coverPanel}>
             <div className={`${styles.coverPreview} ${errors.image ? styles.coverError : ""}`}>
-              {cover ? <Image src={cover} alt={title || "Обложка кейса"} width={1200} height={900} priority unoptimized /> : <div><strong>Обложка</strong><span>JPG, PNG или WebP до 100 МБ</span></div>}
+              {cover ? <SmartImage src={cover} alt={title || "Обложка кейса"} width={1200} height={900} priority /> : <div><strong>Обложка</strong><span>JPG, PNG или WebP до 100 МБ</span></div>}
               {coverState.status === "uploading" ? <div className={styles.coverProgress}><span style={{ width: `${coverState.progress}%` }} /></div> : null}
             </div>
             <label className={styles.fileButton}>{cover ? "Заменить обложку" : "Выбрать обложку"}<input name="cover_file" type="file" accept="image/*" onChange={(event) => handleCover(event.target.files?.[0])} /></label>

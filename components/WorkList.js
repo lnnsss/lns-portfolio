@@ -8,8 +8,10 @@ import styles from "./WorkList.module.css";
 
 export default function WorkList({ projects }) {
   const [activeProject, setActiveProject] = useState(null);
+  const [activeIndex, setActiveIndex] = useState(null);
   const [didDrag, setDidDrag] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
   const viewportRef = useRef(null);
   const carouselRef = useRef(null);
   const [maxOffset, setMaxOffset] = useState(0);
@@ -65,7 +67,14 @@ export default function WorkList({ projects }) {
     if (!maxOffset) return;
     if (value > 0) dragX.set(0);
     if (value < -maxOffset) dragX.set(-maxOffset);
+    setScrollProgress(Math.round((Math.abs(Math.max(-maxOffset, Math.min(0, value))) / maxOffset) * 1000) / 10);
   });
+
+  function handleScrub(event) {
+    const nextProgress = Number(event.target.value);
+    setScrollProgress(nextProgress);
+    dragX.set(maxOffset ? -(maxOffset * nextProgress) / 100 : 0);
+  }
 
   return (
     <section id="work" className={styles.work}>
@@ -84,16 +93,23 @@ export default function WorkList({ projects }) {
           dragElastic={0.04}
           onDragStart={() => setDidDrag(true)}
           onDragEnd={() => window.setTimeout(() => setDidDrag(false), 80)}
+          onPointerLeave={() => setActiveIndex(null)}
+          onMouseLeave={() => setActiveIndex(null)}
         >
           {projects.map((project, index) => (
             <button
               key={project.id}
-              className={styles.cardHit}
+              className={`${styles.cardHit} ${activeIndex === index ? styles.cardHitActive : ""}`}
               style={{
                 "--z": projects.length - index,
                 "--lift": `${index % 3 === 0 ? 9 : index % 3 === 1 ? -2 : 5}px`,
-                "--depth": `${index * -8}px`
+                "--depth": `${index * -8}px`,
+                "--hover-shift": activeIndex === null || isMobile ? "0px" : index < activeIndex ? "clamp(-108px, -6.4vw, -54px)" : index > activeIndex ? "clamp(54px, 6.4vw, 108px)" : "0px"
               }}
+              onPointerEnter={() => setActiveIndex(index)}
+              onMouseEnter={() => setActiveIndex(index)}
+              onFocus={() => setActiveIndex(index)}
+              onBlur={() => setActiveIndex(null)}
               onClick={() => {
                 if (!didDrag) setActiveProject(project);
               }}
@@ -110,6 +126,22 @@ export default function WorkList({ projects }) {
           ))}
         </motion.div>
       </div>
+
+      {!isMobile ? (
+        <div className={styles.scrubber} aria-label="Навигация по кейсам">
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="0.1"
+            value={scrollProgress}
+            onChange={handleScrub}
+            onInput={handleScrub}
+            disabled={!maxOffset}
+            aria-label="Переместиться по кейсам"
+          />
+        </div>
+      ) : null}
 
       <ProjectModal project={activeProject} onClose={() => setActiveProject(null)} />
     </section>

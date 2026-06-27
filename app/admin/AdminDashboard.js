@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
@@ -9,6 +8,7 @@ import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { AdminToastProvider, useAdminToast } from "./AdminToast";
+import SmartImage from "@/components/SmartImage";
 import styles from "./admin.module.css";
 
 const sectionCopy = {
@@ -44,7 +44,7 @@ function Sortable({ id, className = "", children }) {
 }
 
 function Preview({ src, alt, className = "" }) {
-  return src ? <Image className={className} src={src} alt={alt || ""} width={640} height={480} loading="lazy" unoptimized /> : <div className={`${styles.previewFallback} ${className}`}>Нет изображения</div>;
+  return src ? <SmartImage className={className} src={src} alt={alt || ""} width={640} height={480} /> : <div className={`${styles.previewFallback} ${className}`}>Нет изображения</div>;
 }
 
 function reorderData(name, values) {
