@@ -68,7 +68,7 @@
   width: 100%;
   padding: 0;
   border: 0;
-  aspect-ratio: 1;
+  aspect-ratio: 3 / 4;
   overflow: hidden;
   background: #151515;
   cursor: zoom-in;
@@ -250,13 +250,13 @@ button.galleryItem {
   .heroImage {
     width: 100%;
     margin-inline: 0;
-    aspect-ratio: auto;
-    overflow: visible;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
   }
 
   .heroImage img {
-    height: auto;
-    object-fit: contain;
+    height: 100%;
+    object-fit: cover;
   }
 
   .caseCopy {
