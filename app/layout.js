@@ -1,10 +1,23 @@
 import "./globals.css";
 
 const siteTitle = "lns portfolio";
+const siteName = "lnsnostylist";
+const personName = "Тимур Безбородников";
 const siteDescription =
   "Портфолио lnsnostylist: графический дизайнер, айдентика, визуальные системы, постеры, обложки, дизайн для соцсетей и аккуратная веб-разработка для презентации проектов.";
 const siteUrl = "https://lnsnostylist.ru";
 const previewImage = "/preview.jpg";
+const previewImageUrl = `${siteUrl}${previewImage}`;
+const contactEmail = "bezborodnikovtimur@gmail.com";
+const socialProfileUrls = [
+  "https://vk.com/l1lines",
+  "https://max.ru/u/f9LHodD0cOIh49rvqQYNbhq-jsi0h2Oo_V_FmVt5ZW4K7YYxenIVBbO0b3k",
+  "https://t.me/lnsnostylist",
+  "https://www.instagram.com/lnsnostylist",
+  "https://ru.pinterest.com/lnsnostylist/",
+  "https://www.behance.net/lnsnostylist",
+  "https://github.com/lnnsss"
+];
 
 export const metadata = {
   metadataBase: new URL(siteUrl),
@@ -13,18 +26,19 @@ export const metadata = {
     template: "%s"
   },
   applicationName: siteTitle,
-  description: siteDescription,
-  generator: "Next.js",
-  referrer: "origin-when-cross-origin",
-  formatDetection: {
-    email: false,
-    address: false,
-    telephone: false
-  },
   appleWebApp: {
     capable: true,
     title: siteTitle,
     statusBarStyle: "black-translucent"
+  },
+  description: siteDescription,
+  generator: "Next.js",
+  referrer: "origin-when-cross-origin",
+  manifest: "/site.webmanifest",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false
   },
   abstract:
     "Авторское портфолио графического дизайнера: айдентика, постеры, обложки, визуальные системы, дизайн для соцсетей и веб-презентации.",
@@ -49,9 +63,9 @@ export const metadata = {
     "портфолио-сайт",
     "креативный дизайнер"
   ],
-  authors: [{ name: "lnsnostylist", url: siteUrl }],
-  creator: "lnsnostylist",
-  publisher: "lnsnostylist",
+  authors: [{ name: personName, url: siteUrl }],
+  creator: personName,
+  publisher: siteName,
   category: "graphic design portfolio",
   alternates: {
     canonical: "/"
@@ -65,7 +79,6 @@ export const metadata = {
     shortcut: ["/favicon.svg"],
     other: [{ rel: "mask-icon", url: "/favicon.svg", color: "#050505" }]
   },
-  manifest: "/site.webmanifest",
   robots: {
     index: true,
     follow: true,
@@ -77,10 +90,10 @@ export const metadata = {
     }
   },
   openGraph: {
-    title: siteTitle,
+    title: `${siteName} — портфолио графического дизайнера`,
     description: siteDescription,
     url: "/",
-    siteName: siteTitle,
+    siteName,
     locale: "ru_RU",
     type: "website",
     images: [
@@ -94,22 +107,115 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: siteTitle,
+    title: `${siteName} — портфолио графического дизайнера`,
     description: siteDescription,
     images: [previewImage]
   },
   other: {
-    "theme-color": "#050505",
-    "color-scheme": "dark",
     "portfolio:type": "graphic design",
     "portfolio:focus": "айдентика, визуальные системы, постеры, обложки, дизайн для соцсетей, веб-презентации"
   }
 };
 
+export const viewport = {
+  themeColor: "#050505",
+  colorScheme: "dark"
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": `${siteUrl}/#website`,
+      url: siteUrl,
+      name: siteTitle,
+      alternateName: siteName,
+      inLanguage: "ru-RU",
+      description: siteDescription,
+      publisher: {
+        "@id": `${siteUrl}/#person`
+      }
+    },
+    {
+      "@type": "ProfilePage",
+      "@id": `${siteUrl}/#profile`,
+      url: siteUrl,
+      name: `${siteName} — портфолио графического дизайнера`,
+      description: siteDescription,
+      inLanguage: "ru-RU",
+      isPartOf: {
+        "@id": `${siteUrl}/#website`
+      },
+      primaryImageOfPage: {
+        "@id": `${siteUrl}/#primaryimage`
+      },
+      about: {
+        "@id": `${siteUrl}/#person`
+      }
+    },
+    {
+      "@type": "Person",
+      "@id": `${siteUrl}/#person`,
+      name: personName,
+      alternateName: siteName,
+      url: siteUrl,
+      email: contactEmail,
+      jobTitle: "Графический дизайнер и веб-разработчик",
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: "Казань",
+        addressCountry: "RU"
+      },
+      knowsAbout: [
+        "графический дизайн",
+        "айдентика",
+        "брендинг",
+        "постеры",
+        "обложки",
+        "визуальные системы",
+        "дизайн для соцсетей",
+        "веб-дизайн"
+      ],
+      sameAs: socialProfileUrls
+    },
+    {
+      "@type": "ImageObject",
+      "@id": `${siteUrl}/#primaryimage`,
+      url: previewImageUrl,
+      width: 1200,
+      height: 630,
+      caption: "lns portfolio — графический дизайн, айдентика и визуальные системы"
+    },
+    {
+      "@type": "CreativeWork",
+      "@id": `${siteUrl}/#portfolio`,
+      name: "Портфолио графического дизайнера lnsnostylist",
+      url: siteUrl,
+      creator: {
+        "@id": `${siteUrl}/#person`
+      },
+      image: previewImageUrl,
+      inLanguage: "ru-RU",
+      keywords: metadata.keywords.join(", "),
+      description: siteDescription,
+      genre: ["graphic design", "identity design", "web design", "portfolio"]
+    }
+  ]
+};
+
 export default function RootLayout({ children }) {
   return (
     <html lang="ru">
-      <body>{children}</body>
+      <body>
+        {children}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c")
+          }}
+        />
+      </body>
     </html>
   );
 }
