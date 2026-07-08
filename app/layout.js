@@ -67,6 +67,9 @@ export const metadata = {
   creator: personName,
   publisher: siteName,
   category: "graphic design portfolio",
+  verification: {
+    yandex: "73021d6e3e2038fd"
+  },
   alternates: {
     canonical: "/"
   },
