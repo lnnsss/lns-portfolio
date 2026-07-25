@@ -199,7 +199,7 @@ export default function Hero() {
         onPointerCancel={handleStarPointerUp}
         aria-hidden="true"
       >
-        <Image src="/heroStar.png" alt="" width={1456} height={1456} priority />
+        <Image src="/heroStar.webp" alt="" width={1456} height={1456} priority />
       </motion.div>
       <div className={styles.copy}>
         <h1 aria-label="Креатор для твоих идей, проектов, мечтаний, целей, креативов, амбиций и смыслов">
