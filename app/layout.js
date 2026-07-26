@@ -6,7 +6,7 @@ const personName = "Тимур Безбородников";
 const siteDescription =
   "Портфолио lnsnostylist: графический дизайнер, айдентика, визуальные системы, постеры, обложки, дизайн для соцсетей и аккуратная веб-разработка для презентации проектов.";
 const siteUrl = "https://lnsnostylist.ru";
-const previewImage = "/preview.jpg";
+const previewImage = "/og-preview.jpg";
 const previewImageUrl = `${siteUrl}${previewImage}`;
 const contactEmail = "bezborodnikovtimur@gmail.com";
 const socialProfileUrls = [
