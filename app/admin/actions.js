@@ -198,6 +198,10 @@ export async function reorderArchiveItems(formData) {
   return reorderRows("design_archive_items", "slug", formData.getAll("slugs").map(String), "reorder-archive");
 }
 
+export async function reorderSocialLinks(formData) {
+  return reorderRows("social_links", "label", formData.getAll("labels").map(String), "reorder-social");
+}
+
 function validateProject(formData, isNew) {
   const required = {
     title: "Добавь название",

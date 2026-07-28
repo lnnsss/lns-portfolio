@@ -33,13 +33,13 @@ function DragIcon() {
   );
 }
 
-function Sortable({ id, className = "", children }) {
+function Sortable({ id, className = "", children, as: Component = "div", ...props }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   return (
-    <div ref={setNodeRef} className={`${className} ${isDragging ? styles.dragging : ""}`} style={{ transform: CSS.Transform.toString(transform), transition }}>
+    <Component ref={setNodeRef} className={`${className} ${isDragging ? styles.dragging : ""}`} style={{ transform: CSS.Transform.toString(transform), transition }} {...props}>
       <button className={styles.dragHandle} type="button" aria-label="Изменить порядок" {...attributes} {...listeners}><DragIcon /></button>
       {children}
-    </div>
+    </Component>
   );
 }
 
@@ -291,21 +291,36 @@ function ArchiveDialog({ item, actions, actionState, onClose, onChange }) {
 
 function SocialSection({ initialItems, actions, actionState }) {
   const [items, setItems] = useState(initialItems);
+  const sensors = useSensorsConfig();
+  const ids = useMemo(() => items.map((item) => item.label), [items]);
+
+  async function onDragEnd({ active, over }) {
+    if (!over || active.id === over.id) return;
+    const previous = items;
+    const next = arrayMove(items, items.findIndex((item) => item.label === active.id), items.findIndex((item) => item.label === over.id));
+    setItems(next);
+    await actionState.run(actions.reorderSocialLinks, reorderData("labels", next.map((item) => item.label)), { onError: () => setItems(previous) });
+  }
+
   function save(data) {
     return actionState.run(actions.saveSocialLink, data, { onSuccess: (saved) => setItems((current) => current.some((item) => item.label === saved.label) ? current.map((item) => item.label === saved.label ? saved : item) : [...current, saved]) });
   }
   return (
     <section className={styles.openSection}>
-      <div className={styles.socialList}>{items.map((link, index) => (
-        <form key={link.label} action={save} className={styles.socialRow}>
-          <input name="position" type="hidden" value={index} readOnly />
-          <label>Название<input name="label" defaultValue={link.label} required /></label>
-          <label>URL<input name="href" type="url" defaultValue={link.href} required /></label>
-          <label className={styles.switchLabel}><input name="is_visible" type="checkbox" defaultChecked={link.is_visible} /><span />На сайте</label>
-          <SubmitButton>Сохранить</SubmitButton>
-          <SubmitButton className={styles.textDanger} formAction={(data) => actionState.run(actions.deleteSocialLink, data, { onSuccess: () => setItems((current) => current.filter((item) => item.label !== link.label)) })}>Удалить</SubmitButton>
-        </form>
-      ))}</div>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+        <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+          <div className={styles.socialList}>{items.map((link, index) => (
+            <Sortable key={link.label} id={link.label} as="form" action={save} className={`${styles.socialRow} ${styles.socialSortableRow}`}>
+              <input name="position" type="hidden" value={index} readOnly />
+              <label>Название<input name="label" defaultValue={link.label} required /></label>
+              <label>URL<input name="href" type="url" defaultValue={link.href} required /></label>
+              <label className={styles.switchLabel}><input name="is_visible" type="checkbox" defaultChecked={link.is_visible} /><span />На сайте</label>
+              <SubmitButton>Сохранить</SubmitButton>
+              <SubmitButton className={styles.textDanger} formAction={(data) => actionState.run(actions.deleteSocialLink, data, { onSuccess: () => setItems((current) => current.filter((item) => item.label !== link.label)) })}>Удалить</SubmitButton>
+            </Sortable>
+          ))}</div>
+        </SortableContext>
+      </DndContext>
       <form action={save} className={`${styles.socialRow} ${styles.newSocial}`}>
         <input name="position" type="hidden" value={items.length} readOnly />
         <label>Новая ссылка<input name="label" placeholder="Instagram" required /></label>

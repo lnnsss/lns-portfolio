@@ -266,6 +266,7 @@
   padding: 15px 0;
   border-bottom: 1px solid var(--admin-line);
 }
+.socialSortableRow { grid-template-columns: 30px minmax(130px, .45fr) minmax(220px, 1fr) auto auto auto; }
 .socialRow > label:not(.switchLabel), .field { display: grid; gap: 8px; color: var(--admin-muted); font-size: 10px; }
 .socialRow input, .field input, .field textarea, .modalPanel input {
   width: 100%;
@@ -438,6 +439,8 @@
   .photoThumb { width: 90px; height: 74px; }
   .inlineRowForm { display: grid; justify-content: stretch; }
   .socialRow { grid-template-columns: 1fr; align-items: stretch; }
+  .socialSortableRow { grid-template-columns: 24px 1fr; }
+  .socialSortableRow > label:not(.switchLabel), .socialSortableRow > button { grid-column: 2; }
   .socialRow > button { width: 100% !important; }
   .archiveGrid { grid-template-columns: 1fr 1fr; }
   .editorTopbar { top: 58px; grid-template-columns: 34px minmax(0,1fr) auto; gap: 10px; padding: 10px 14px; }

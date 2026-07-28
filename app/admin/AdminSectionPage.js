@@ -10,6 +10,7 @@ import {
   reorderAboutSlides,
   reorderArchiveItems,
   reorderProjects,
+  reorderSocialLinks,
   saveAboutSlide,
   saveArchiveItem,
   saveSocialLink,
@@ -55,6 +56,7 @@ export default async function AdminSectionPage({ section, searchParams }) {
           saveArchiveItem={saveArchiveItem}
           deleteArchiveItem={deleteArchiveItem}
           reorderArchiveItems={reorderArchiveItems}
+          reorderSocialLinks={reorderSocialLinks}
           saveSocialLink={saveSocialLink}
           deleteSocialLink={deleteSocialLink}
         />
