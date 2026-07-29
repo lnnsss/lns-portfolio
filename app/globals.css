@@ -22,7 +22,7 @@
 
 @media (max-width: 760px) {
   :root {
-    --header-height: 92px;
+    --header-height: 48px;
     --gutter: clamp(16px, 5vw, 24px);
   }
 }

@@ -114,8 +114,8 @@
     grid-template-columns: 1fr auto;
     align-items: start;
     align-content: start;
-    gap: 10px;
-    min-height: var(--header-height);
+    gap: 0 10px;
+    min-height: 0;
     padding-top: 16px;
     padding-bottom: 10px;
   }
