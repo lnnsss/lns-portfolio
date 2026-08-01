@@ -6,6 +6,22 @@ import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
 
+async function loadEnvFile(path) {
+  try {
+    const content = await readFile(path, "utf8");
+    for (const line of content.split(/\r?\n/)) {
+      const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
+      if (!match || process.env[match[1]] !== undefined) continue;
+      process.env[match[1]] = match[2].replace(/^['"]|['"]$/g, "");
+    }
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
+}
+
+await loadEnvFile(".env.local");
+await loadEnvFile(".env");
+
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://grhwypxuulycepbrzwnh.supabase.co";
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const BUCKET = "portfolio-media";
