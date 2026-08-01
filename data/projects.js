@@ -101,15 +101,15 @@ export const aboutContent = {
   ],
   slides: [
     {
-      src: "/aboutMe/1.png",
+      src: "/aboutMe/1.webp",
       alt: "Портрет Тимура"
     },
     {
-      src: "/aboutMe/2.png",
+      src: "/aboutMe/2.webp",
       alt: "Тимур в рабочей визуальной среде"
     },
     {
-      src: "/aboutMe/3.png",
+      src: "/aboutMe/3.webp",
       alt: "Тимур, фото для блока обо мне"
     }
   ]

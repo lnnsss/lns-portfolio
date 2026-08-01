@@ -262,9 +262,9 @@ on conflict (key) do nothing;
 
 insert into public.about_slides (position, image_url, alt)
 values
-  (0, '/aboutMe/1.png', 'Портрет Тимура'),
-  (1, '/aboutMe/2.png', 'Тимур в рабочей визуальной среде'),
-  (2, '/aboutMe/3.png', 'Тимур, фото для блока обо мне')
+  (0, '/aboutMe/1.webp', 'Портрет Тимура'),
+  (1, '/aboutMe/2.webp', 'Тимур в рабочей визуальной среде'),
+  (2, '/aboutMe/3.webp', 'Тимур, фото для блока обо мне')
 on conflict do nothing;
 
 insert into public.projects (slug, position, title, descriptor, year, category, role, technologies, live_url, accent, image_url, gallery, summary)
