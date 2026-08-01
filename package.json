@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "media:webp": "node scripts/migrate-supabase-media-to-webp.mjs"
+    "media:webp": "node scripts/migrate-supabase-media-to-webp.mjs",
+    "media:cleanup-originals": "node scripts/cleanup-supabase-original-media.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
