@@ -153,6 +153,9 @@ const jsonLd = {
       primaryImageOfPage: {
         "@id": `${siteUrl}/#primaryimage`
       },
+      mainEntity: {
+        "@id": `${siteUrl}/#person`
+      },
       about: {
         "@id": `${siteUrl}/#person`
       }
