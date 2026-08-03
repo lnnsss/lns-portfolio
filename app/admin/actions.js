@@ -94,17 +94,12 @@ async function requireAdminClient() {
   return supabase;
 }
 
-async function uploadFileIfPresent(supabase, formData, fieldName, folder) {
+function imageUrlFromPreparedUpload(formData, fieldName) {
   const file = formData.get(fieldName);
-  if (!file || typeof file === "string" || file.size === 0) return optionalString(formData, `${fieldName}_current`);
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
-  const path = `${folder}/${Date.now()}-${safeName}`;
-  const { error } = await supabase.storage.from("portfolio-media").upload(path, file, {
-    cacheControl: "31536000",
-    upsert: false
-  });
-  if (error) throw error;
-  return supabase.storage.from("portfolio-media").getPublicUrl(path).data.publicUrl;
+  if (file && typeof file !== "string" && file.size > 0) {
+    throw new Error("Изображение нужно загрузить через форму перед сохранением");
+  }
+  return optionalString(formData, `${fieldName}_current`);
 }
 
 function refresh(slug) {
@@ -141,7 +136,7 @@ export async function saveAboutSlide(formData) {
     const payload = {
       position: numberValue(formData, "position"),
       alt: stringValue(formData, "alt") || "Фото обо мне",
-      image_url: await uploadFileIfPresent(supabase, formData, "image", "about"),
+      image_url: imageUrlFromPreparedUpload(formData, "image"),
       is_visible: checkboxValue(formData, "is_visible")
     };
     if (!payload.image_url) return fail("Добавь изображение", { image: "Выбери изображение" });
@@ -313,7 +308,7 @@ export async function saveArchiveItem(formData) {
       position: numberValue(formData, "position"),
       title,
       accent: stringValue(formData, "accent") || "#77f7c8",
-      image_url: await uploadFileIfPresent(supabase, formData, "image", `archive/${slug}`),
+      image_url: imageUrlFromPreparedUpload(formData, "image"),
       is_visible: checkboxValue(formData, "is_visible")
     };
     if (!payload.image_url) return fail("Добавь изображение", { image: "Выбери изображение" });
