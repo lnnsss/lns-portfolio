@@ -1,5 +1,6 @@
 "use client";
 
+import { PROJECT_FILTERS, getProjectFilters } from "@/lib/project-filters";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -63,6 +64,7 @@ function Editor({ project, isNew }) {
   const router = useRouter();
   const showToast = useAdminToast();
   const formRef = useRef(null);
+  const [filterCategories, setFilterCategories] = useState(() => getProjectFilters(project));
   const [title, setTitle] = useState(project.title || "");
   const [slug, setSlug] = useState(isNew ? "" : project.slug);
   const [slugEdited, setSlugEdited] = useState(!isNew);
@@ -293,6 +295,22 @@ function Editor({ project, isNew }) {
                 <Field label="Год" name="year" error={errors.year}><input name="year" defaultValue={project.year || ""} inputMode="numeric" /></Field>
                 <Field label="Категория" name="category" error={errors.category}><input name="category" defaultValue={project.category || ""} /></Field>
               </div>
+              <fieldset className={styles.filterChoices}>
+                <legend>Категории фильтра</legend>
+                <div>
+                  {PROJECT_FILTERS.map((filter) => (
+                    <label key={filter.value}>
+                      <input type="checkbox" name="filter_categories" value={filter.value}
+                        checked={filterCategories.includes(filter.value)}
+                        onChange={(event) => setFilterCategories((current) => event.target.checked
+                          ? [...current, filter.value] : current.filter((value) => value !== filter.value))} />
+                      <span>{filter.label}</span>
+                    </label>
+                  ))}
+                </div>
+                <small>{filterCategories.length ? "Можно выбрать несколько. Во «Все» кейс попадёт автоматически." : "Не указано — кейс отображается только во «Все»."}</small>
+                {errors.filter_categories && <small className={styles.fieldError}>{errors.filter_categories}</small>}
+              </fieldset>
               <Field label="Роль" name="role" error={errors.role}><input name="role" defaultValue={project.role || ""} /></Field>
               <Field label="Инструменты" name="technologies" error={errors.technologies} hint="Через запятую"><input name="technologies" defaultValue={(project.technologies || []).join(", ")} /></Field>
             </section>

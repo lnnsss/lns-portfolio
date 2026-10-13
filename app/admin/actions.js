@@ -1,5 +1,6 @@
 "use server";
 
+import { PROJECT_FILTERS } from "@/lib/project-filters";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -208,6 +209,10 @@ function validateProject(formData, isNew) {
     summary: "Добавь полное описание"
   };
   const fieldErrors = Object.fromEntries(Object.entries(required).filter(([key]) => !stringValue(formData, key)));
+  const filterCategories = formData.getAll("filter_categories").map(String);
+  if (filterCategories.some((value) => !PROJECT_FILTERS.some((filter) => filter.value === value))) {
+    fieldErrors.filter_categories = "Выбери категории из списка";
+  }
   const imageUrl = optionalString(formData, "image_current");
   if (isNew && !imageUrl) fieldErrors.image = "Добавь обложку";
   const slug = slugValue(stringValue(formData, "slug") || stringValue(formData, "title"));
@@ -254,6 +259,7 @@ export async function saveProject(formData) {
       descriptor: stringValue(formData, "descriptor"),
       year: stringValue(formData, "year"),
       category: stringValue(formData, "category"),
+      filter_categories: [...new Set(formData.getAll("filter_categories").map(String))],
       role: stringValue(formData, "role"),
       technologies: splitList(formData.get("technologies"), ","),
       live_url: optionalString(formData, "live_url"),

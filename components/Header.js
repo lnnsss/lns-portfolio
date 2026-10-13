@@ -28,6 +28,7 @@ export default function Header() {
 
   return (
     <motion.header
+      onKeyDown={(event) => { if (event.key === "Escape") setMenuOpen(false); }}
       className={`${styles.header} ${isScrolled ? styles.scrolled : ""} ${isMenuOpen ? styles.menuOpen : ""}`}
       initial={{ y: -28, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
@@ -47,7 +48,7 @@ export default function Header() {
         <span className={styles.menuLine} />
         <span className={styles.menuLine} />
         <span className={styles.menuLine} />
-        <span className="sr-only">Открыть меню</span>
+        <span className="sr-only">{isMenuOpen ? "Закрыть меню" : "Открыть меню"}</span>
       </button>
       <nav id="primary-navigation" className={styles.nav} aria-label="Основная навигация">
         {navItems.map(([label, anchor], index) => (

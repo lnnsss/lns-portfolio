@@ -101,6 +101,24 @@ main {
   text-transform: uppercase;
 }
 
+.section-title {
+  max-width: 1180px;
+  margin: 0;
+  color: white;
+  font-family: var(--font-jumbo);
+  font-size: clamp(32px, 4.8vw, 68px);
+  font-weight: 800;
+  letter-spacing: -0.055em;
+  line-height: 0.9;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+@media (max-width: 620px) {
+  .section-title { font-size: clamp(30px, 8.5vw, 38px); }
+  .section-title br { display: none; }
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

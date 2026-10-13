@@ -35,7 +35,7 @@ export default function WhyMe() {
     <section id="advantages" className={styles.why} aria-labelledby="why-title">
       <div className={styles.head}>
         <span className="section-kicker">Почему выбирают меня</span>
-        <h2 id="why-title">От первой идеи до готового продукта</h2>
+        <h2 id="why-title" className="section-title">От первой идеи до готового продукта</h2>
       </div>
       <div className={styles.grid}>
         {points.map((point, index) => (

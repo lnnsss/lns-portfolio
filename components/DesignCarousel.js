@@ -26,10 +26,10 @@ export default function DesignCarousel({ items }) {
   }, []);
 
   return (
-    <section id="designs" className={styles.designs}>
+    <section id="designs" className={styles.designs} aria-labelledby="designs-title">
       <div className={styles.copy}>
         <span className="section-kicker">Дизайн-архив</span>
-        <p>То, что остаётся между кейсами</p>
+        <h2 id="designs-title" className="section-title">То, что остаётся между кейсами</h2>
       </div>
       <div className={styles.viewport} aria-label="Карусель дизайн-работ">
         <div className={styles.rail} style={{ transform: `translateX(${-progress * 33.333}%)` }}>
